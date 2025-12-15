@@ -20,7 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { save, open } from '@tauri-apps/plugin-dialog';
 
-import { writeTextFile, readTextFile, mkdir } from '@tauri-apps/plugin-fs';
+import { writeTextFile, readTextFile, mkdir, exists } from '@tauri-apps/plugin-fs';
 
 import './App.css';
 
@@ -30,7 +30,8 @@ interface Scene {
   id: string;
   title: string; // シーンタイトル
   chapter: string; // 章タイトル
-  characters: string; // 登場人物
+  characters: string; // 登場人物 (Deprecated: for display/compatibility)
+  characterIds?: string[]; // 登場人物IDリスト (New)
   time: string; // 時間
   place: string; // 場所
   aim: string; // 狙いと役割
@@ -38,11 +39,23 @@ interface Scene {
   note: string; // 裏設定
 }
 
+interface Character {
+  id: string;
+  name: string;
+}
+
+// Data structure for saving/loading
+interface StoryData {
+  scenes: Scene[];
+  characters: Character[];
+}
+
 const INITIAL_SCENE: Scene = {
   id: '1',
   title: '物語の始まり',
   chapter: '第1章',
   characters: '主人公, ヒロイン',
+  characterIds: ['1', '2'],
   time: '夕方',
   place: '通学路',
   aim: '主人公の日常と、非日常への入り口を描写する',
@@ -51,13 +64,15 @@ const INITIAL_SCENE: Scene = {
 };
 
 // Sortable Scene Card Component
+// Sortable Scene Card Component
 interface SortableSceneCardProps {
   scene: Scene;
+  characterList: Character[];
   onClick: (scene: Scene) => void;
   isHiddenFull?: boolean; // For DragOverlay
 }
 
-function SortableSceneCard({ scene, onClick, isHiddenFull }: SortableSceneCardProps) {
+function SortableSceneCard({ scene, characterList, onClick, isHiddenFull }: SortableSceneCardProps) {
   const {
     attributes,
     listeners,
@@ -103,7 +118,9 @@ function SortableSceneCard({ scene, onClick, isHiddenFull }: SortableSceneCardPr
       
       <div className="card-row">
         <span className="label">登場人物</span>
-        <span className="value">{scene.characters || '-'}</span>
+        <span className="value">
+          {scene.characterIds?.map(id => characterList.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters || '-'}
+        </span>
       </div>
 
       {(scene.time || scene.place) && (
@@ -127,7 +144,7 @@ function SortableSceneCard({ scene, onClick, isHiddenFull }: SortableSceneCardPr
 }
 
 // Plain component for DragOverlay
-function SceneCardOverlay({ scene }: { scene: Scene }) {
+function SceneCardOverlay({ scene, characterList }: { scene: Scene, characterList: Character[] }) {
   return (
     <div className="scene-card" style={{ cursor: 'grabbing', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
        <div className="card-header">
@@ -141,7 +158,9 @@ function SceneCardOverlay({ scene }: { scene: Scene }) {
       )}
       <div className="card-row">
         <span className="label">登場人物</span>
-        <span className="value">{scene.characters || '-'}</span>
+        <span className="value">
+          {scene.characterIds?.map(id => characterList.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters || '-'}
+        </span>
       </div>
       {(scene.time || scene.place) && (
         <div className="card-row">
@@ -156,8 +175,13 @@ function SceneCardOverlay({ scene }: { scene: Scene }) {
 
 function App() {
   const [scenes, setScenes] = useState<Scene[]>([INITIAL_SCENE]);
+  const [characters, setCharacters] = useState<Character[]>([
+    { id: '1', name: '主人公' },
+    { id: '2', name: 'ヒロイン' },
+  ]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Scene | null>(null);
+  const [isCharacterMenuOpen, setIsCharacterMenuOpen] = useState(false); // For character management modal
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
 
@@ -230,10 +254,53 @@ function App() {
     }
   };
 
-  const handleInputChange = (field: keyof Scene, value: string) => {
+  const handleInputChange = (field: keyof Scene, value: any) => {
     if (editForm) {
       setEditForm({ ...editForm, [field]: value });
     }
+  };
+
+  // Character Management Handlers
+  const addCharacter = () => {
+    const name = prompt('登場人物の名前を入力してください');
+    if (name) {
+      setCharacters([...characters, { id: crypto.randomUUID(), name }]);
+    }
+  };
+
+  const updateCharacter = (id: string, name: string) => {
+    setCharacters(characters.map(c => c.id === id ? { ...c, name } : c));
+  };
+  
+  const deleteCharacter = (id: string) => {
+    if (confirm('この登場人物を削除しますか？')) {
+      setCharacters(characters.filter(c => c.id !== id));
+      // Remove from scenes as well
+      setScenes(scenes.map(s => ({
+        ...s,
+        characterIds: s.characterIds?.filter(cid => cid !== id)
+      })));
+    }
+  };
+
+  const toggleCharacterInScene = (charId: string) => {
+    if (!editForm) return;
+    const currentIds = editForm.characterIds || [];
+    let newIds;
+    if (currentIds.includes(charId)) {
+      newIds = currentIds.filter(id => id !== charId);
+    } else {
+      newIds = [...currentIds, charId];
+    }
+    
+    // Also update legacy string for display
+    const newString = newIds.map(id => characters.find(c => c.id === id)?.name).filter(Boolean).join(', ');
+    
+    setEditForm({
+      ...editForm,
+      characterIds: newIds,
+      characters: newString
+    });
   };
 
   const handleSaveFile = async () => {
@@ -246,8 +313,10 @@ function App() {
         }]
       });
       
+      
       if (path) {
-        await writeTextFile(path, JSON.stringify(scenes, null, 2));
+        const data: StoryData = { scenes, characters };
+        await writeTextFile(path, JSON.stringify(data, null, 2));
         alert('保存しました');
       }
     } catch (e) {
@@ -273,7 +342,43 @@ function App() {
         const content = await readTextFile(file);
         const parsed = JSON.parse(content);
         if (Array.isArray(parsed)) {
-          setScenes(parsed);
+          // Legacy format: Scene[]
+          // Migrate on load if needed, or just set scenes.
+          // For characters, we might need to extract unique strings if we want to be fancy,
+          // but for now, let's keep existing characters state or maybe reset it?
+          // Let's extract characters from strings for migration
+          const newScenes = parsed as Scene[];
+          const uniqueChars = new Set<string>();
+          newScenes.forEach(s => {
+             if (s.characters) {
+               s.characters.split(/[,、]/).map(c => c.trim()).filter(Boolean).forEach(c => uniqueChars.add(c));
+             }
+          });
+          
+          const newCharacters: Character[] = Array.from(uniqueChars).map(name => ({
+             id: crypto.randomUUID(),
+             name
+          }));
+
+          // Map scenes to character IDs
+          newScenes.forEach(s => {
+             s.characterIds = [];
+             if (s.characters) {
+               const names = s.characters.split(/[,、]/).map(c => c.trim());
+               names.forEach(n => {
+                 const found = newCharacters.find(c => c.name === n);
+                 if (found) s.characterIds?.push(found.id);
+               });
+             }
+          });
+
+          setScenes(newScenes);
+          setCharacters(newCharacters);
+          alert('読み込みました (旧形式変換済み)');
+        } else if (parsed.scenes && parsed.characters) {
+          // New format
+          setScenes(parsed.scenes);
+          setCharacters(parsed.characters);
           alert('読み込みました');
         } else {
           alert('ファイル形式が正しくありません');
@@ -336,12 +441,18 @@ function App() {
         const safeTitle = scene.title.trim() || '無題のシーン';
         const fileName = `${sceneNum}_${safeTitle}.txt`;
         const filePath = `${folderPath}${sep}${fileName}`;
+        
+        // Skip if file already exists
+        if (await exists(filePath)) {
+          console.log(`Skipping existing file: ${fileName}`);
+          continue;
+        }
 
         // Create Content
         const content = `**場所** ${scene.place}
 **時間** ${scene.time}
 
-**登場人物** ${scene.characters}
+**登場人物** ${scene.characterIds?.map(id => characters.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters}
 
 **狙いと役割** ${scene.aim}
 
@@ -404,6 +515,13 @@ function App() {
         </div>
         
         <div className="actions">
+          <button 
+            className="secondary" 
+            onClick={() => setIsCharacterMenuOpen(true)}
+            style={{ marginRight: '0.5rem' }}
+          >
+            登場人物設定
+          </button>
           <button className="primary" onClick={handleAddScene}>
             + シーン追加
           </button>
@@ -426,6 +544,7 @@ function App() {
                 <SortableSceneCard 
                   key={scene.id} 
                   scene={scene} 
+                  characterList={characters}
                   onClick={startEditing}
                 />
               ))}
@@ -433,7 +552,7 @@ function App() {
           </SortableContext>
           
           <DragOverlay>
-            {activeScene ? <SceneCardOverlay scene={activeScene} /> : null}
+            {activeScene ? <SceneCardOverlay scene={activeScene} characterList={characters} /> : null}
           </DragOverlay>
         </DndContext>
       </main>
@@ -487,11 +606,28 @@ function App() {
 
               <div className="form-group">
                 <label>登場人物</label>
-                <input 
-                  value={editForm.characters} 
-                  onChange={e => handleInputChange('characters', e.target.value)} 
-                  placeholder="A, B, C"
-                />
+                <div className="character-checkbox-list" style={{ 
+                  border: '1px solid var(--border-subtle)', 
+                  borderRadius: '4px', 
+                  padding: '0.5rem',
+                  maxHeight: '150px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem'
+                }}>
+                  {characters.map(char => (
+                    <label key={char.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={editForm.characterIds?.includes(char.id) || false}
+                        onChange={() => toggleCharacterInScene(char.id)}
+                      />
+                      {char.name}
+                    </label>
+                  ))}
+                  {characters.length === 0 && <span style={{ color: 'var(--text-sub)' }}>登場人物が登録されていません</span>}
+                </div>
               </div>
 
               <div className="form-group">
@@ -529,6 +665,37 @@ function App() {
                   <button className="primary" onClick={saveScene}>保存</button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Character Management Modal */}
+      {isCharacterMenuOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>登場人物設定</h2>
+              <button className="close-btn" onClick={() => setIsCharacterMenuOpen(false)}>✕</button>
+            </div>
+            <div className="edit-form">
+               <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
+                 {characters.map(char => (
+                   <li key={char.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
+                     <input 
+                       value={char.name}
+                       onChange={(e) => updateCharacter(char.id, e.target.value)}
+                       style={{ flex: 1 }}
+                     />
+                     <button className="delete-btn" onClick={() => deleteCharacter(char.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>削除</button>
+                   </li>
+                 ))}
+               </ul>
+               <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                 <button onClick={addCharacter}>+ 追加</button>
+                 <div style={{ flex: 1 }}></div>
+                 <button className="primary" onClick={() => setIsCharacterMenuOpen(false)}>閉じる</button>
+               </div>
             </div>
           </div>
         </div>

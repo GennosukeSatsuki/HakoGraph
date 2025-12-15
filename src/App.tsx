@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { save, open, message, ask } from '@tauri-apps/plugin-dialog';
+import { save, open, ask } from '@tauri-apps/plugin-dialog';
 
 import { writeTextFile, readTextFile, mkdir, exists } from '@tauri-apps/plugin-fs';
 
@@ -207,8 +207,8 @@ function App() {
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
   
   // For long-press time picker
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const repeatInterval = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+  const repeatInterval = useRef<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

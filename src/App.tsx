@@ -45,14 +45,21 @@ interface Character {
   name: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+}
+
 interface AppSettings {
   timeInputMode: 'text' | 'datetime';
+  placeInputMode: 'text' | 'select';
 }
 
 // Data structure for saving/loading
 interface StoryData {
   scenes: Scene[];
   characters: Character[];
+  locations?: Location[];
   settings?: AppSettings;
 }
 
@@ -197,11 +204,16 @@ function App() {
     { id: '1', name: '主人公' },
     { id: '2', name: 'ヒロイン' },
   ]);
+  const [locations, setLocations] = useState<Location[]>([
+    { id: '1', name: '通学路' },
+  ]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Scene | null>(null);
   const [isCharacterMenuOpen, setIsCharacterMenuOpen] = useState(false); // For character management modal
+  const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false); // For location management modal
   const [newCharacterName, setNewCharacterName] = useState(''); // For adding new character
-  const [settings, setSettings] = useState<AppSettings>({ timeInputMode: 'text' });
+  const [newLocationName, setNewLocationName] = useState(''); // For adding new location
+  const [settings, setSettings] = useState<AppSettings>({ timeInputMode: 'text', placeInputMode: 'text' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
@@ -342,6 +354,25 @@ function App() {
     });
   };
 
+  // Location Management Handlers
+  const addLocation = async () => {
+    if (newLocationName && newLocationName.trim()) {
+      setLocations(prev => [...prev, { id: crypto.randomUUID(), name: newLocationName.trim() }]);
+      setNewLocationName(''); // Clear input
+    }
+  };
+
+  const updateLocation = (id: string, name: string) => {
+    setLocations(locations.map(l => l.id === id ? { ...l, name } : l));
+  };
+  
+  const deleteLocation = async (id: string) => {
+    const confirmed = await ask('この場所を削除しますか？', { title: '確認', kind: 'warning' });
+    if (confirmed) {
+      setLocations(locations.filter(l => l.id !== id));
+    }
+  };
+
   // Helper functions for time picker long-press
   const clearTimers = () => {
     if (longPressTimer.current) {
@@ -383,7 +414,7 @@ function App() {
       
       
       if (path) {
-        const data: StoryData = { scenes, characters, settings };
+        const data: StoryData = { scenes, characters, locations, settings };
         await writeTextFile(path, JSON.stringify(data, null, 2));
         alert('保存しました');
       }
@@ -447,6 +478,9 @@ function App() {
           // New format
           setScenes(parsed.scenes);
           setCharacters(parsed.characters);
+          if (parsed.locations) {
+            setLocations(parsed.locations);
+          }
           if (parsed.settings) {
             setSettings(parsed.settings);
           }
@@ -573,6 +607,10 @@ function App() {
               <button className="dropdown-item" onClick={handleDeploy}>
                 書き出し...
               </button>
+              <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '0.25rem 0' }} />
+              <button className="dropdown-item" onClick={() => { setIsFileMenuOpen(false); setIsSettingsOpen(true); }}>
+                設定...
+              </button>
             </div>
           )}
           {/* Click outside to close could be implemented with a global listener, 
@@ -588,18 +626,20 @@ function App() {
         <div className="actions">
           <button 
             className="secondary" 
-            onClick={() => setIsSettingsOpen(true)}
-            style={{ marginRight: '0.5rem' }}
-          >
-            ⚙️ 設定
-          </button>
-          <button 
-            className="secondary" 
             onClick={() => setIsCharacterMenuOpen(true)}
             style={{ marginRight: '0.5rem' }}
           >
             登場人物設定
           </button>
+          {settings.placeInputMode === 'select' && (
+            <button 
+              className="secondary" 
+              onClick={() => setIsLocationMenuOpen(true)}
+              style={{ marginRight: '0.5rem' }}
+            >
+              場所設定
+            </button>
+          )}
           <button className="primary" onClick={handleAddScene}>
             + シーン追加
           </button>
@@ -835,11 +875,31 @@ function App() {
                 </div>
                 <div className="form-group">
                   <label>場所</label>
-                  <input 
-                    value={editForm.place || ''} 
-                    onChange={e => handleInputChange('place', e.target.value)} 
-                    placeholder="教室、公園など"
-                  />
+                  {settings.placeInputMode === 'select' ? (
+                    <select
+                      value={editForm.place || ''}
+                      onChange={e => handleInputChange('place', e.target.value)}
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-main)',
+                        border: '1px solid var(--border-subtle)',
+                        padding: '0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        width: '100%'
+                      }}
+                    >
+                      <option value="">選択してください</option>
+                      {locations.map(loc => (
+                        <option key={loc.id} value={loc.name}>{loc.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input 
+                      value={editForm.place || ''} 
+                      onChange={e => handleInputChange('place', e.target.value)} 
+                      placeholder="教室、公園など"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -957,6 +1017,45 @@ function App() {
         </div>
       )}
 
+      {/* Location Management Modal */}
+      {isLocationMenuOpen && (
+        <div className="modal-overlay" onClick={() => setIsLocationMenuOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>場所設定</h2>
+              <button className="close-btn" onClick={() => setIsLocationMenuOpen(false)}>✕</button>
+            </div>
+            <div className="edit-form">
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {locations.map(loc => (
+                  <li key={loc.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                    <input 
+                      value={loc.name}
+                      onChange={(e) => updateLocation(loc.id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ flex: 1 }}
+                    />
+                    <button type="button" className="delete-btn" onClick={() => deleteLocation(loc.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>削除</button>
+                  </li>
+                ))}
+              </ul>
+              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input 
+                  type="text"
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') addLocation(); }}
+                  placeholder="新しい場所の名前"
+                  style={{ flex: 1 }}
+                />
+                <button type="button" onClick={() => addLocation()}>追加</button>
+                <button type="button" className="primary" onClick={() => setIsLocationMenuOpen(false)}>閉じる</button>
+              </div>
+           </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
@@ -986,6 +1085,27 @@ function App() {
                 <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
                   日時選択モードでは、カレンダーと時計で正確な日時を設定できます。
                   書き出し時は読みやすい形式に変換されます。
+                </small>
+              </div>
+              <div className="form-group">
+                <label>場所入力モード</label>
+                <select 
+                  value={settings.placeInputMode}
+                  onChange={(e) => setSettings({ ...settings, placeInputMode: e.target.value as 'text' | 'select' })}
+                  style={{ 
+                    backgroundColor: 'var(--bg-input)', 
+                    color: 'var(--text-main)', 
+                    border: '1px solid var(--border-subtle)',
+                    padding: '0.5rem',
+                    borderRadius: 'var(--radius-sm)',
+                    width: '100%'
+                  }}
+                >
+                  <option value="text">テキスト入力（自由入力）</option>
+                  <option value="select">リストから選択</option>
+                </select>
+                <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
+                  リスト選択モードでは、「場所設定」で登録した場所から選択できます。
                 </small>
               </div>
               <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>

@@ -633,17 +633,19 @@ function App() {
                 <div className="form-group">
                   <label>時間</label>
                   {settings.timeInputMode === 'datetime' ? (
-                    <input 
-                      type="datetime-local"
-                      value={editForm.time || ''} 
-                      onChange={e => {
-                        setEditForm({
-                          ...editForm,
-                          time: e.target.value,
-                          timeMode: 'datetime'
-                        });
-                      }} 
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="datetime-local"
+                        value={editForm.time || ''} 
+                        onChange={e => {
+                          setEditForm({
+                            ...editForm,
+                            time: e.target.value,
+                            timeMode: 'datetime'
+                          });
+                        }} 
+                      />
+                    </div>
                   ) : (
                     <input 
                       value={editForm.time || ''} 

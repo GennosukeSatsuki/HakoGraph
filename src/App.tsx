@@ -91,13 +91,12 @@ const INITIAL_SCENE: Scene = {
 // Sortable Scene Card Component
 interface SortableSceneCardProps {
   scene: Scene;
-  characterList: Character[];
   chapterList: Chapter[];
   onClick: (scene: Scene) => void;
   isHiddenFull?: boolean; // For DragOverlay
 }
 
-function SortableSceneCard({ scene, characterList, chapterList, onClick, isHiddenFull }: SortableSceneCardProps) {
+function SortableSceneCard({ scene, chapterList, onClick, isHiddenFull }: SortableSceneCardProps) {
   const {
     attributes,
     listeners,
@@ -150,7 +149,7 @@ function SortableSceneCard({ scene, characterList, chapterList, onClick, isHidde
 }
 
 // Plain component for DragOverlay
-function SceneCardOverlay({ scene, characterList, chapterList }: { scene: Scene, characterList: Character[], chapterList: Chapter[] }) {
+function SceneCardOverlay({ scene, chapterList }: { scene: Scene, chapterList: Chapter[] }) {
   return (
     <div className="scene-card" style={{ cursor: 'grabbing', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
        <div className="card-header">
@@ -858,19 +857,18 @@ ${separator}
           >
             <div className="scene-grid">
               {scenes.map(scene => (
-                <SortableSceneCard 
-                  key={scene.id} 
-                  scene={scene} 
-                  characterList={characters}
-                  chapterList={chapters}
-                  onClick={startEditing}
-                />
+              <SortableSceneCard 
+                key={scene.id} 
+                scene={scene} 
+                chapterList={chapters}
+                onClick={startEditing}
+              />
               ))}
             </div>
           </SortableContext>
           
           <DragOverlay>
-            {activeScene ? <SceneCardOverlay scene={activeScene} characterList={characters} chapterList={chapters} /> : null}
+            {activeScene ? <SceneCardOverlay scene={activeScene} chapterList={chapters} /> : null}
           </DragOverlay>
         </DndContext>
       </main>

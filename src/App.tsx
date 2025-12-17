@@ -61,6 +61,7 @@ interface AppSettings {
   timeInputMode: 'text' | 'datetime';
   placeInputMode: 'text' | 'select';
   autoSave: boolean;
+  theme: 'system' | 'light' | 'dark';
 }
 
 // Data structure for saving/loading
@@ -212,7 +213,7 @@ function App() {
   const [newCharacterName, setNewCharacterName] = useState(''); // For adding new character
   const [newLocationName, setNewLocationName] = useState(''); // For adding new location
   const [newChapterTitle, setNewChapterTitle] = useState(''); // For adding new chapter
-  const [settings, setSettings] = useState<AppSettings>({ timeInputMode: 'text', placeInputMode: 'text', autoSave: false });
+  const [settings, setSettings] = useState<AppSettings>({ timeInputMode: 'text', placeInputMode: 'text', autoSave: false, theme: 'system' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [appVersion, setAppVersion] = useState('');
@@ -597,6 +598,29 @@ function App() {
   useEffect(() => {
     getVersion().then(v => setAppVersion(v)).catch(() => setAppVersion('Unknown'));
   }, []);
+
+  // Theme Application
+  useEffect(() => {
+    const applyTheme = () => {
+      if (settings.theme === 'system') {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', settings.theme);
+      }
+    };
+
+    applyTheme();
+
+    // Listen for system theme changes when in system mode
+    if (settings.theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => applyTheme();
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+  }, [settings.theme]);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -1357,6 +1381,28 @@ ${separator}
                 </select>
                 <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
                   リスト選択モードでは、「場所設定」で登録した場所から選択できます。
+                </small>
+              </div>
+              <div className="form-group">
+                <label>テーマ</label>
+                <select 
+                  value={settings.theme}
+                  onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'system' | 'light' | 'dark' })}
+                  style={{ 
+                    backgroundColor: 'var(--bg-input)', 
+                    color: 'var(--text-main)', 
+                    border: '1px solid var(--border-subtle)',
+                    padding: '0.5rem',
+                    borderRadius: 'var(--radius-sm)',
+                    width: '100%'
+                  }}
+                >
+                  <option value="system">システムデフォルト</option>
+                  <option value="light">ライトモード</option>
+                  <option value="dark">ダークモード</option>
+                </select>
+                <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
+                  システムデフォルトでは、OSの設定に従ってテーマが自動的に切り替わります。
                 </small>
               </div>
               <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>

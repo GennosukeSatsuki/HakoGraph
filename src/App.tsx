@@ -130,7 +130,6 @@ function SortableSceneCard({ scene, characterList, chapterList, onClick, isHidde
       onClick={() => onClick(scene)}
     >
       <div className="card-header">
-        {/* シーンNOは非表示にするため削除 */}
         <span className="scene-title">{scene.title || '(無題)'}</span>
       </div>
       
@@ -140,27 +139,11 @@ function SortableSceneCard({ scene, characterList, chapterList, onClick, isHidde
           {scene.chapterId ? chapterList.find(c => c.id === scene.chapterId)?.title : (scene.chapter || '-')}
         </span>
       </div>
-      
+
       <div className="card-row">
-        <span className="label">登場人物</span>
-        <span className="value">
-          {scene.characterIds?.map(id => characterList.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters || '-'}
+        <span className="value" style={{ fontSize: '0.9em', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+          {scene.summary ? (scene.summary.length > 80 ? scene.summary.substring(0, 80) + '...' : scene.summary) : 'あらすじなし'}
         </span>
-      </div>
-
-      <div className="card-row">
-         <span className="label">場所・時</span>
-         <span className="value">{(scene.place || '-') + ' / ' + formatTimeForDisplay(scene.time, scene.timeMode)}</span>
-      </div>
-
-      <div className="card-row">
-        <span className="label">狙い</span>
-        <span className="value">{scene.aim || '-'}</span>
-      </div>
-
-      <div className="card-row">
-        <span className="label">あらすじ</span>
-        <span className="value">{scene.summary ? (scene.summary.length > 50 ? scene.summary.substring(0, 50) + '...' : scene.summary) : '-'}</span>
       </div>
     </div>
   );
@@ -180,14 +163,9 @@ function SceneCardOverlay({ scene, characterList, chapterList }: { scene: Scene,
         </span>
       </div>
       <div className="card-row">
-        <span className="label">登場人物</span>
-        <span className="value">
-          {scene.characterIds?.map(id => characterList.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters || '-'}
+        <span className="value" style={{ fontSize: '0.9em', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+          {scene.summary ? (scene.summary.length > 80 ? scene.summary.substring(0, 80) + '...' : scene.summary) : 'あらすじなし'}
         </span>
-      </div>
-      <div className="card-row">
-         <span className="label">場所・時</span>
-         <span className="value">{(scene.place || '-') + ' / ' + formatTimeForDisplay(scene.time, scene.timeMode)}</span>
       </div>
     </div>
   );

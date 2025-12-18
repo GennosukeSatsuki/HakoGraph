@@ -153,7 +153,8 @@ jobs:
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          npx -y -p twitter-api-v2 node -e "
+          npm install twitter-api-v2
+          node -e "
           const { TwitterApi } = require('twitter-api-v2');
           const client = new TwitterApi({
             appKey: process.env.TWITTER_CONSUMER_API_KEY,

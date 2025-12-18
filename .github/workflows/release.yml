@@ -140,18 +140,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      post-to-x:
-    needs: update-release-notes
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Post to X (Twitter)
         uses: ethomson/send-tweet-action@v1
         with:
-          # ここを env ではなく with の中に記述します
           consumer-key: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
           consumer-secret: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
           access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}

@@ -80,11 +80,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { data: release } = await github.rest.repos.getReleaseByTag({
+            const tagName = context.ref.replace('refs/tags/', '');
+            
+            // getReleaseByTag doesn't support draft releases, so we search in listReleases
+            const releases = await github.rest.repos.listReleases({
               owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: context.ref.replace('refs/tags/', '')
+              repo: context.repo.repo
             });
+            
+            const release = releases.data.find(r => r.tag_name === tagName);
+            
+            if (!release) {
+              throw new Error(`Release not found for tag ${tagName}`);
+            }
 
             const { data: notes } = await github.rest.repos.generateReleaseNotes({
               owner: context.repo.owner,

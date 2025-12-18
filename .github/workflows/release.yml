@@ -140,16 +140,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Post to X (Twitter)
-        uses: captradeoff/x-post-action@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          appKey: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
-          appSecret: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
-          accessToken: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          accessSecret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-          message: |
-            📦 箱書きエディタ ${{ github.ref_name }} をリリースしました！
+          node-version: lts/*
 
-            ダウンロード: https://github.com/GennosukeSatsuki/hakogaki/releases/tag/${{ github.ref_name }}
-
-            #箱書きエディタ #小説執筆 #創作支援
+      - name: Post to X (Twitter)
+        env:
+          TWITTER_CONSUMER_API_KEY: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
+          TWITTER_CONSUMER_API_SECRET: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          npx -y -p twitter-api-v2 node -e "
+          const { TwitterApi } = require('twitter-api-v2');
+          const client = new TwitterApi({
+            appKey: process.env.TWITTER_CONSUMER_API_KEY,
+            appSecret: process.env.TWITTER_CONSUMER_API_SECRET,
+            accessToken: process.env.TWITTER_ACCESS_TOKEN,
+            accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
+          });
+          const msg = '📦 箱書きエディタ ' + process.env.TAG_NAME + ' をリリースしました！\n\n' +
+                      'ダウンロード: https://github.com/GennosukeSatsuki/hakogaki/releases/tag/' + process.env.TAG_NAME + '\n\n' +
+                      '#箱書きエディタ #小説執筆 #創作支援';
+          client.v2.tweet(msg)
+            .then(t => console.log('✅ ツイート成功！ ID:', t.data.id))
+            .catch(e => {
+              console.error('❌ ツイート失敗:', JSON.stringify(e.data || e.message, null, 2));
+              process.exit(1);
+            });
+          "

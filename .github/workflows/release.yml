@@ -141,7 +141,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Post to X (Twitter)
-        uses: snow-actions/tweet@v1.4.0
+        # API v2 に対応したアクションに変更
+        uses: ethomson/send-tweet-action@v1
         with:
           status: |
             📦 箱書きエディタ ${{ github.ref_name }} をリリースしました！
@@ -150,7 +151,8 @@ jobs:
 
             #箱書きエディタ #小説執筆 #創作支援
         env:
-          CONSUMER_API_KEY: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
-          CONSUMER_API_SECRET_KEY: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
-          ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          # 変数名は同じでOKですが、念のため確認してください
+          TWITTER_CONSUMER_API_KEY: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
+          TWITTER_CONSUMER_API_SECRET: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}

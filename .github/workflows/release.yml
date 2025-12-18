@@ -93,32 +93,35 @@ jobs:
               previous_tag_name: undefined
             });
 
-            // リリースノートを更新
+            const version = context.ref.replace('refs/tags/', '').replace('v', '');
+            const releaseBody = [
+              `# 箱書きエディタ ${context.ref.replace('refs/tags/', '')}`,
+              '',
+              '## 📦 ダウンロード',
+              '',
+              '各プラットフォーム用のインストーラーは下記の Assets からダウンロードできます。',
+              '',
+              '### macOS',
+              `- \`箱書きエディタ_${version}_universal.dmg\``,
+              '',
+              '### Windows',
+              `- \`箱書きエディタ_${version}_x64-setup.exe\``,
+              `- \`箱書きエディタ_${version}_x64_en-US.msi\``,
+              '',
+              '### Linux',
+              `- \`箱書きエディタ_${version}_amd64.deb\``,
+              `- \`箱書きエディタ_${version}_amd64.AppImage\``,
+              '',
+              '---',
+              '',
+              notes.body
+            ].join('\n');
+
             await github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.id,
-              body: `# 箱書きエディタ ${context.ref.replace('refs/tags/', '')}
-
-## 📦 ダウンロード
-
-各プラットフォーム用のインストーラーは下記の Assets からダウンロードできます。
-
-### macOS
-- \`箱書きエディタ_${context.ref.replace('refs/tags/', '').replace('v', '')}_universal.dmg\`
-
-### Windows
-- \`箱書きエディタ_${context.ref.replace('refs/tags/', '').replace('v', '')}_x64-setup.exe\`
-- \`箱書きエディタ_${context.ref.replace('refs/tags/', '').replace('v', '')}_x64_en-US.msi\`
-
-### Linux
-- \`箱書きエディタ_${context.ref.replace('refs/tags/', '').replace('v', '')}_amd64.deb\`
-- \`箱書きエディタ_${context.ref.replace('refs/tags/', '').replace('v', '')}_amd64.AppImage\`
-
----
-
-${notes.body}
-`
+              body: releaseBody
             });
 
   post-to-x:

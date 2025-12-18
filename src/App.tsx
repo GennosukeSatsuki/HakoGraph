@@ -724,7 +724,6 @@ function App() {
       
       // Track scenes that need deployment info updates
       const updatedScenes = [...scenes];
-      let currentFileNumber = 0;
 
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];

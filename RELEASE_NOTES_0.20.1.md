@@ -1,4 +1,4 @@
-# Release Notes - v0.20.0
+# Release Notes - v0.20.1
 
 ## 🎉 新機能
 
@@ -20,11 +20,12 @@
 ## 📦 ダウンロード
 
 ### デスクトップ版
-- **macOS**: `箱書きエディタ_0.20.0_universal.dmg`
-- **Windows**: `箱書きエディタ_0.20.0_x64-setup.exe`
-- **Linux**: `箱書きエディタ_0.20.0_amd64.deb`
+- **macOS**: `箱書きエディタ_0.20.1_universal.dmg`
+- **Windows**: `箱書きエディタ_0.20.1_x64-setup.exe`
+- **Linux**: `箱書きエディタ_0.20.1_amd64.deb`
 
 ## 🔧 技術的な変更
+- fix(android): Androidビルド時のfont-kit依存関係によるエラーを修正
 - エディタコンポーネントのTipTap移行
 - ファイルシステム操作の自動化ロジックの改善
 - キャラクターカウントのキャッシュ機構の実装

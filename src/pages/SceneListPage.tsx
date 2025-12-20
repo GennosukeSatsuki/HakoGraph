@@ -4,7 +4,7 @@ import {
   DndContext, 
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -80,7 +80,6 @@ function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
-    cursor: 'grab',
   };
 
   // If used in DragOverlay, we want full opacity and 'grabbing' cursor
@@ -93,11 +92,14 @@ function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className="scene-card"
     >
       <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="drag-handle" {...attributes} {...listeners}>
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+            <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-12a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+          </svg>
+        </div>
         <span className="scene-title" onClick={() => onClick(scene)} style={{ cursor: 'pointer', flex: 1 }}>
           {scene.title || '(無題)'}
         </span>
@@ -186,15 +188,15 @@ export default function SceneListPage() {
   const repeatInterval = useRef<number | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8, // Avoid triggering drag on simple clicks
+        distance: 10, // Avoid triggering drag on simple clicks
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        delay: 200,
+        tolerance: 6,
       },
     }),
     useSensor(KeyboardSensor, {

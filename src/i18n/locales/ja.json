@@ -1,0 +1,147 @@
+{
+  "common": {
+    "save": "保存",
+    "close": "閉じる",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "add": "追加",
+    "edit": "編集",
+    "confirm": "確認",
+    "warning": "警告",
+    "loading": "読み込み中..."
+  },
+  "menu": {
+    "file": "ファイル",
+    "newProject": "✨ 新規プロジェクト",
+    "saveProject": "💾 プロジェクトを保存",
+    "saveAs": "📄 名前を付けて保存...",
+    "openProject": "📂 プロジェクトを開く...",
+    "export": "📝 テキストファイルに書き出し...",
+    "settings": "⚙️ 設定...",
+    "about": "ℹ️ バージョン情報..."
+  },
+  "actions": {
+    "characterSettings": "登場人物設定",
+    "chapterSettings": "章設定",
+    "locationSettings": "場所設定",
+    "addScene": "+ シーン追加",
+    "openEditor": "エディタを開く"
+  },
+  "scene": {
+    "sceneNo": "シーン{{no}}",
+    "title": "タイトル",
+    "noTitle": "無題のシーン",
+    "chapter": "章",
+    "characters": "登場人物",
+    "time": "時間",
+    "place": "場所",
+    "aim": "狙いと役割",
+    "summary": "詳細なあらすじ",
+    "note": "裏設定",
+    "noSummary": "あらすじなし",
+    "placeholder": {
+      "title": "シーンタイトル",
+      "summary": "詳細なあらすじ...",
+      "note": "裏設定/メモ..."
+    }
+  },
+  "settings": {
+    "tabs": {
+      "general": "全般",
+      "outline": "構成",
+      "editor": "エディタ"
+    },
+    "language": "言語",
+    "theme": {
+      "label": "テーマ",
+      "system": "システム設定に従う",
+      "light": "ライトモード",
+      "dark": "ダークモード"
+    },
+    "autoSave": {
+      "label": "自動保存",
+      "description": "ファイルが開かれている場合、変更を自動的に上書き保存します（入力停止2秒後）。"
+    },
+    "timeInput": {
+      "label": "時間入力モード",
+      "text": "テキスト入力（例：昼、夕方）",
+      "datetime": "日時選択（カレンダー＋時計）",
+      "description": "日時選択モードでは、カレンダーと時計で正確な日時を設定できます。書き出し時は読みやすい形式に変換されます。"
+    },
+    "placeInput": {
+      "label": "場所入力モード",
+      "text": "テキスト入力（自由入力）",
+      "select": "リストから選択",
+      "description": "リスト選択モードでは、「場所設定」で登録した場所から選択できます。"
+    },
+    "editor": {
+      "font": "フォント",
+      "fontSize": "フォントサイズ (px)",
+      "verticalWriting": "縦書きモード（実験中）",
+      "verticalWritingDesc": "日本語小説向けの縦書き表示に切り替えます。行頭禁則処理が適用されます。",
+      "mincho": "明朝体",
+      "gothic": "ゴシック体",
+      "monospace": "等幅フォント"
+    }
+  },
+  "modals": {
+    "editScene": {
+      "title": "シーン編集"
+    },
+    "settings": {
+      "title": "設定"
+    },
+    "about": {
+      "title": "HakoGraph について",
+      "description": "シンプルで使いやすい\n小説・脚本構成作成ツール"
+    },
+    "character": {
+      "title": "登場人物設定",
+      "placeholder": "新しい登場人物の名前"
+    },
+    "chapter": {
+      "title": "章設定",
+      "placeholder": "新しい章のタイトル"
+    },
+    "location": {
+      "title": "場所設定",
+      "placeholder": "新しい場所の名前"
+    }
+  },
+  "messages": {
+    "deleteConfirm": "本当に削除しますか？",
+    "deleteChapterDesc": "（使用中のシーンの章設定は解除されます）",
+    "newProjectConfirm": "新規プロジェクトを作成しますか？\n\n現在のプロジェクトは保存されていない場合、失われます。",
+    "exportSuccess": "書き出しが完了しました",
+    "exportFailed": "書き出しに失敗しました: {{error}}",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました",
+    "loadSuccess": "読み込みました",
+    "fileLoadFailed": "読み込みに失敗しました",
+    "fileFormatError": "ファイル形式が正しくありません",
+    "migrationSuccess": "読み込みました (旧形式変換済み)",
+    "mobileExportWarning": "モバイル版では、ファイルは以下のディレクトリに書き出されます:\n{{dir}}",
+    "exportDirFailed": "書き出しディレクトリの取得に失敗しました",
+    "projectDataNotFound": "プロジェクトデータが見つかりません。箱書き一覧に戻ってファイルを開いてください。",
+    "sceneNotFound": "シーンが見つかりません。",
+    "filePathNotSet": "ファイルパスが設定されていません",
+    "processFailed": "処理に失敗しました",
+    "exportNeeded": "書き出しが必要です",
+    "exportNeededDesc": "このシーンはまだ書き出されていません。\n箱書き一覧に戻って、「ファイル」メニューから\n「書き出し...」を実行してください。",
+    "backToList": "箱書き一覧に戻る",
+    "writingComplete": "執筆完了",
+    "writingCompleteConfirm": "箱書き部分（セパレーターより上）が削除され、本文のみになります。\nこの操作は元に戻せません。",
+    "separatorNotFound": "セパレーターが見つかりません。既に執筆完了済みの可能性があります。",
+    "bodyNotFound": "本文が見つかりません。",
+    "markedComplete": "執筆完了としてマークしました。箱書き部分を削除しました。",
+    "unsavedChanges": "変更が保存されていません。保存してから戻りますか？",
+    "unsavedChangesConfirm": "変更が保存されていません。保存してから戻りますか？\n\n「OK」: 変更を保存\n「Cancel」: 変更を破棄"
+  },
+  "editor": {
+    "totalChars": "総文字数",
+    "thisScene": "このシーン",
+    "todayProgress": "今日の執筆",
+    "charUnit": "字",
+    "placeholder": "ここに本文を書いてください..."
+  }
+}

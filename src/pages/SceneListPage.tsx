@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import {
   DndContext, 
   closestCenter,
@@ -67,6 +69,7 @@ interface SortableSceneCardProps {
 }
 
 function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }: SortableSceneCardProps) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -93,6 +96,7 @@ function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }
       ref={setNodeRef}
       style={style}
       className="scene-card"
+      onClick={() => onClick(scene)}
     >
       <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="drag-handle" {...attributes} {...listeners}>
@@ -100,30 +104,20 @@ function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }
             <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-12a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
           </svg>
         </div>
-        <span className="scene-title" onClick={() => onClick(scene)} style={{ cursor: 'pointer', flex: 1 }}>
-          {scene.title || '(無題)'}
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(scene.id);
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          style={{
-            padding: '0.25rem 0.75rem',
-            fontSize: '0.85rem',
-            backgroundColor: 'var(--primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            flexShrink: 0
-          }}
+        <button 
+          className="edit-btn" 
+          onClick={(e) => { e.stopPropagation(); onEdit(scene.id); }}
+          title={t('actions.openEditor')}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
         >
-          執筆
+          📝
         </button>
       </div>
-      
+
+      <div className="card-title" style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
+        {scene.title || t('scene.noTitle')}
+      </div>
+
       <div className="card-row">
         <span className="value strong" style={{ fontSize: '0.95em' }}>
           {scene.chapterId ? chapterList.find(c => c.id === scene.chapterId)?.title : (scene.chapter || '-')}
@@ -132,7 +126,7 @@ function SortableSceneCard({ scene, chapterList, onClick, onEdit, isHiddenFull }
 
       <div className="card-row">
         <span className="value" style={{ fontSize: '0.9em', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-          {scene.summary ? (scene.summary.length > 80 ? scene.summary.substring(0, 80) + '...' : scene.summary) : 'あらすじなし'}
+          {scene.summary ? (scene.summary.length > 80 ? scene.summary.substring(0, 80) + '...' : scene.summary) : t('scene.noSummary')}
         </span>
       </div>
     </div>
@@ -155,6 +149,7 @@ function SceneCardOverlay({ scene, chapterList }: { scene: Scene, chapterList: C
 
 
 export default function SceneListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [initialized, setInitialized] = useState(false);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -173,7 +168,7 @@ export default function SceneListPage() {
   const [newCharacterName, setNewCharacterName] = useState(''); // For adding new character
   const [newLocationName, setNewLocationName] = useState(''); // For adding new location
   const [newChapterTitle, setNewChapterTitle] = useState(''); // For adding new chapter
-  const [settings, setSettings] = useState<AppSettings>({ timeInputMode: 'text', placeInputMode: 'text', autoSave: false, theme: 'system', editorFontFamily: 'sans-serif', editorFontSize: 16, verticalWriting: false });
+  const [settings, setSettings] = useState<AppSettings>({ language: 'ja', timeInputMode: 'text', placeInputMode: 'text', autoSave: false, theme: 'system', editorFontFamily: 'sans-serif', editorFontSize: 16, verticalWriting: false });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'outline' | 'editor'>('general');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -262,11 +257,13 @@ export default function SceneListPage() {
     setEditForm(editableScene);
   };
 
-  const saveScene = () => {
+  const saveScene = (shouldClose: boolean = true) => {
     if (!editForm) return;
-    setScenes(scenes.map(s => s.id === editForm.id ? editForm : s));
-    setEditingId(null);
-    setEditForm(null);
+    setScenes(prev => prev.map(s => s.id === editForm.id ? editForm : s));
+    if (shouldClose) {
+      setEditingId(null);
+      setEditForm(null);
+    }
   };
 
   const cancelEdit = () => {
@@ -274,12 +271,13 @@ export default function SceneListPage() {
     setEditForm(null);
   };
 
-  const deleteScene = (id: string) => {
-    if (confirm('本当に削除しますか？')) {
-      setScenes(scenes.filter(s => s.id !== id));
-      if (editingId === id) cancelEdit();
-    }
-  };
+  const deleteScene = async (id: string) => {
+  const confirmed = await ask(t('messages.deleteConfirm'), { title: t('common.confirm'), kind: 'warning' });
+  if (confirmed) {
+    setScenes(scenes.filter(s => s.id !== id));
+    if (editingId === id) cancelEdit();
+  }
+};
 
   const handleInputChange = (field: keyof Scene, value: any) => {
     if (editForm) {
@@ -300,7 +298,7 @@ export default function SceneListPage() {
   };
   
   const deleteCharacter = async (id: string) => {
-    const confirmed = await ask('この登場人物を削除しますか？', { title: '確認', kind: 'warning' });
+    const confirmed = await ask(t('messages.deleteConfirm'), { title: t('common.confirm'), kind: 'warning' });
     if (confirmed) {
       setCharacters(characters.filter(c => c.id !== id));
       // Remove from scenes as well
@@ -344,7 +342,7 @@ export default function SceneListPage() {
   };
   
   const deleteLocation = async (id: string) => {
-    const confirmed = await ask('この場所を削除しますか？', { title: '確認', kind: 'warning' });
+    const confirmed = await ask(t('messages.deleteConfirm'), { title: t('common.confirm'), kind: 'warning' });
     if (confirmed) {
       setLocations(locations.filter(l => l.id !== id));
     }
@@ -363,7 +361,7 @@ export default function SceneListPage() {
   };
   
   const deleteChapter = async (id: string) => {
-    const confirmed = await ask('この章を削除しますか？\n（使用中のシーンの章設定は解除されます）', { title: '確認', kind: 'warning' });
+    const confirmed = await ask(`${t('messages.deleteConfirm')}\n${t('messages.deleteChapterDesc')}`, { title: t('common.confirm'), kind: 'warning' });
     if (confirmed) {
       setChapters(chapters.filter(c => c.id !== id));
       // Remove from scenes as well
@@ -405,7 +403,7 @@ export default function SceneListPage() {
     try {
       const path = await save({
         filters: [{
-          name: 'Hakogaki Data (JSON)',
+          name: 'HakoGraph Data (JSON)',
           extensions: ['json']
         }]
       });
@@ -422,11 +420,11 @@ export default function SceneListPage() {
         };
         await writeTextFile(path, JSON.stringify(data, null, 2));
         setCurrentFilePath(path);
-        alert('保存しました');
+        alert(t('messages.saved'));
       }
     } catch (e) {
       console.error(e);
-      alert('保存に失敗しました: ' + e);
+      alert(t('messages.saveFailed') + ': ' + e);
     }
   };
 
@@ -449,11 +447,11 @@ export default function SceneListPage() {
         dailyProgress: dailyProgress ?? undefined
       };
       await writeTextFile(currentFilePath, JSON.stringify(data, null, 2));
-      if (!silent) alert('上書き保存しました');
+      if (!silent) alert(t('messages.saved'));
       else console.log('Auto saved');
     } catch (e) {
       console.error(e);
-      if (!silent) alert('保存に失敗しました: ' + e);
+      if (!silent) alert(t('messages.saveFailed') + ': ' + e);
     }
   };
 
@@ -522,12 +520,12 @@ export default function SceneListPage() {
     
     // 確認ダイアログ
     const confirmed = await ask(
-      '新規プロジェクトを作成しますか？\n\n現在のプロジェクトは保存されていない場合、失われます。',
+      t('messages.newProjectConfirm'),
       { 
-        title: '新規プロジェクト', 
+        title: t('menu.newProject'), 
         kind: 'warning',
-        okLabel: '新規作成',
-        cancelLabel: 'キャンセル'
+        okLabel: t('common.add'),
+        cancelLabel: t('common.cancel')
       }
     );
     
@@ -561,7 +559,7 @@ export default function SceneListPage() {
         multiple: false,
         directory: false,
         filters: [{
-          name: 'Hakogaki Data (JSON)',
+          name: 'HakoGraph Data (JSON)',
           extensions: ['json', 'hako']
         }]
       });
@@ -631,7 +629,7 @@ export default function SceneListPage() {
           const maxSceneNo = Math.max(...newScenes.map(s => s.sceneNo || 0), 0);
           setNextSceneNo(maxSceneNo + 1);
 
-          alert('読み込みました (旧形式変換済み)');
+          alert(t('messages.migrationSuccess'));
         } else if (parsed.scenes && parsed.characters) {
           // New format
           // Legacy migration for files that have scenes/chars but no explicit chapter objects yet (if any?)
@@ -704,7 +702,7 @@ export default function SceneListPage() {
       }
     } catch (e) {
       console.error(e);
-      alert('読み込みに失敗しました: ' + e);
+      alert(t('messages.fileLoadFailed') + ': ' + e);
     }
   };
 
@@ -742,6 +740,14 @@ export default function SceneListPage() {
       return () => mediaQuery.removeEventListener('change', handler);
     }
   }, [settings.theme]);
+
+  // Language Sync
+  useEffect(() => {
+    if (settings.language && i18n.language !== settings.language) {
+      i18n.changeLanguage(settings.language);
+    }
+  }, [settings.language]);
+
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -803,13 +809,13 @@ export default function SceneListPage() {
         // On mobile, use app's document directory
         try {
           const docDir = await documentDir();
-          baseDir = `${docDir}/HakogakiExport`;
+          baseDir = `${docDir}/HakoGraphExport`;
           // Create the export directory if it doesn't exist
           await mkdir(baseDir, { recursive: true });
-          alert(`モバイル版では、ファイルは以下のディレクトリに書き出されます:\n${baseDir}`);
+          alert(t('messages.mobileExportWarning', { dir: baseDir }));
         } catch (e) {
           console.error('Failed to get document directory:', e);
-          alert('書き出しディレクトリの取得に失敗しました');
+          alert(t('messages.exportDirFailed'));
           return;
         }
       } else {
@@ -843,11 +849,11 @@ export default function SceneListPage() {
       setScenes(updatedScenes);
       setChapters(updatedChapters);
 
-      alert('書き出しが完了しました');
+      alert(t('messages.exportSuccess'));
 
     } catch (e) {
       console.error(e);
-      alert('書き出しに失敗しました: ' + e);
+      alert(`${t('messages.exportFailed', { error: e })}`);
     }
   };
 
@@ -867,34 +873,35 @@ export default function SceneListPage() {
               padding: '0.5rem 0.75rem',
             }}
           >
-            ファイル ▼
+            {t('menu.file')} ▼
           </button>
           {isFileMenuOpen && (
             <div className="dropdown-menu">
               <button className="dropdown-item" onClick={handleNewProject}>
-                ✨ 新規プロジェクト
+                {t('menu.newProject')}
               </button>
               <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '0.25rem 0' }} />
               <button className="dropdown-item" onClick={() => handleOverwriteSave(false)}>
-                💾 プロジェクトを保存
+                {t('menu.saveProject')}
               </button>
               <button className="dropdown-item" onClick={handleSaveAs}>
-                📄 名前を付けて保存...
+                {t('menu.saveAs')}
               </button>
               <button className="dropdown-item" onClick={handleLoadFile}>
-                📂 プロジェクトを開く...
+                {t('menu.openProject')}
               </button>
               <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '0.25rem 0' }} />
               <button className="dropdown-item" onClick={handleDeploy}>
-                📝 テキストファイルに書き出し...
+                {t('menu.export')}
               </button>
               <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '0.25rem 0' }} />
               <button className="dropdown-item" onClick={() => { setIsFileMenuOpen(false); setIsSettingsOpen(true); }}>
-                ⚙️ 設定...
+                {t('menu.settings')}
               </button>
+
               <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '0.25rem 0' }} />
               <button className="dropdown-item" onClick={() => { setIsFileMenuOpen(false); setIsAboutOpen(true); }}>
-                ℹ️ バージョン情報...
+                {t('menu.about')}
               </button>
             </div>
           )}
@@ -908,20 +915,41 @@ export default function SceneListPage() {
           )}
         </div>
         
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>HakoGraph</h1>
+          <button 
+            className="secondary-btn" 
+            onClick={() => setIsAboutOpen(true)}
+            style={{ 
+              backgroundColor: 'transparent',
+              border: 'none',
+              padding: '0.25rem 0.5rem',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>ⓘ</span>
+          </button>
+        </div>
+
         <div className="actions">
           <button 
             className="secondary" 
             onClick={() => setIsCharacterMenuOpen(true)}
             style={{ marginRight: '0.5rem' }}
           >
-            登場人物設定
+            {t('actions.characterSettings')}
           </button>
           <button 
             className="secondary" 
             onClick={() => setIsChapterMenuOpen(true)}
             style={{ marginRight: '0.5rem' }}
           >
-            章設定
+            {t('actions.chapterSettings')}
           </button>
           {settings.placeInputMode === 'select' && (
             <button 
@@ -929,11 +957,11 @@ export default function SceneListPage() {
               onClick={() => setIsLocationMenuOpen(true)}
               style={{ marginRight: '0.5rem' }}
             >
-              場所設定
+              {t('actions.locationSettings')}
             </button>
           )}
           <button className="primary" onClick={handleAddScene}>
-            + シーン追加
+            {t('actions.addScene')}
           </button>
         </div>
       </header>
@@ -970,11 +998,11 @@ export default function SceneListPage() {
 
       {/* Edit Modal */}
       {editingId && editForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => saveScene(true)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>シーン編集</h2>
-              <button className="close-btn" onClick={cancelEdit}>✕</button>
+              <h2>{t('modals.editScene.title')}</h2>
+              <button className="close-btn" onClick={() => saveScene(true)}>✕</button>
             </div>
             
             <div className="edit-form">
@@ -1170,85 +1198,51 @@ export default function SceneListPage() {
                     </div>
                   ) : (
                     <input 
-                      value={editForm.time || ''} 
-                      onChange={e => {
-                        setEditForm({
-                          ...editForm,
-                          time: e.target.value,
-                          timeMode: 'text'
-                        });
-                      }} 
-                      placeholder="昼、夕方など"
+                      value={editForm.time} 
+                      onChange={e => handleInputChange('time', e.target.value)} 
                     />
                   )}
                 </div>
+
                 <div className="form-group">
-                  <label>場所</label>
+                  <label>{t('scene.place')}</label>
                   {settings.placeInputMode === 'select' ? (
-                    <select
-                      value={editForm.place || ''}
+                    <select 
+                      value={editForm.place} 
                       onChange={e => handleInputChange('place', e.target.value)}
-                      style={{
-                        backgroundColor: 'var(--bg-input)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--border-subtle)',
-                        padding: '0.5rem',
-                        borderRadius: 'var(--radius-sm)',
-                        width: '100%'
-                      }}
                     >
-                      <option value="">選択してください</option>
-                      {locations.map(loc => (
-                        <option key={loc.id} value={loc.name}>{loc.name}</option>
+                      <option value="">-</option>
+                      {locations.map(l => (
+                        <option key={l.id} value={l.name}>{l.name}</option>
                       ))}
                     </select>
                   ) : (
                     <input 
-                      value={editForm.place || ''} 
+                      value={editForm.place} 
                       onChange={e => handleInputChange('place', e.target.value)} 
-                      placeholder="教室、公園など"
                     />
                   )}
                 </div>
               </div>
 
               <div className="form-group">
-                <label>シーンタイトル</label>
-                <input 
-                  value={editForm.title} 
-                  onChange={e => handleInputChange('title', e.target.value)} 
-                  placeholder="出会い"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>登場人物</label>
-                <div className="character-checkbox-list" style={{ 
-                  border: '1px solid var(--border-subtle)', 
-                  borderRadius: '4px', 
-                  padding: '0.5rem',
-                  maxHeight: '150px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem'
-                }}>
+                <label>{t('scene.characters')}</label>
+                <div className="character-tags">
                   {characters.map(char => (
-                    <label key={char.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={editForm.characterIds?.includes(char.id) || false}
-                        onChange={() => toggleCharacterInScene(char.id)}
-                      />
+                    <button
+                      key={char.id}
+                      className={`character-tag ${editForm.characterIds?.includes(char.id) ? 'active' : ''}`}
+                      onClick={() => toggleCharacterInScene(char.id)}
+                    >
                       {char.name}
-                    </label>
+                    </button>
                   ))}
-                  {characters.length === 0 && <span style={{ color: 'var(--text-sub)' }}>登場人物が登録されていません</span>}
+                  <button className="add-tag-btn" onClick={() => setIsCharacterMenuOpen(true)}>+</button>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>狙いと役割</label>
+                <label>{t('scene.aim')}</label>
                 <textarea 
                   value={editForm.aim} 
                   onChange={e => handleInputChange('aim', e.target.value)} 
@@ -1257,29 +1251,31 @@ export default function SceneListPage() {
               </div>
 
               <div className="form-group">
-                <label>詳細なあらすじ</label>
+                <label>{t('scene.summary')}</label>
                 <textarea 
                   value={editForm.summary} 
                   onChange={e => handleInputChange('summary', e.target.value)} 
                   rows={5}
+                  placeholder={t('scene.placeholder.summary')}
                 />
               </div>
 
               <div className="form-group">
-                <label>裏設定</label>
+                <label>{t('scene.note')}</label>
                 <textarea 
                   value={editForm.note} 
                   onChange={e => handleInputChange('note', e.target.value)} 
                   rows={3}
                   className="note-input"
+                  placeholder={t('scene.placeholder.note')}
                 />
               </div>
 
               <div className="modal-actions">
-                <button className="delete-btn" onClick={() => deleteScene(editingId)}>削除</button>
+                <button className="delete-btn" onClick={() => deleteScene(editingId)}>{t('common.delete')}</button>
                 <div className="right-actions">
-                  <button onClick={cancelEdit}>キャンセル</button>
-                  <button className="primary" onClick={saveScene}>保存</button>
+                  <button onClick={() => saveScene(false)}>{t('common.save')}</button>
+                  <button className="primary" onClick={() => saveScene(true)}>{t('common.close')}</button>
                 </div>
               </div>
             </div>
@@ -1292,7 +1288,7 @@ export default function SceneListPage() {
         <div className="modal-overlay" onClick={() => setIsCharacterMenuOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>登場人物設定</h2>
+              <h2>{t('modals.character.title')}</h2>
               <button className="close-btn" onClick={() => setIsCharacterMenuOpen(false)}>✕</button>
             </div>
             <div className="edit-form">
@@ -1305,7 +1301,7 @@ export default function SceneListPage() {
                        onClick={(e) => e.stopPropagation()}
                        style={{ flex: 1 }}
                      />
-                     <button type="button" className="delete-btn" onClick={() => deleteCharacter(char.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>削除</button>
+                     <button type="button" className="delete-btn" onClick={() => deleteCharacter(char.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
                    </li>
                  ))}
                </ul>
@@ -1315,11 +1311,11 @@ export default function SceneListPage() {
                    value={newCharacterName}
                    onChange={(e) => setNewCharacterName(e.target.value)}
                    onKeyDown={(e) => { if (e.key === 'Enter') addCharacter(); }}
-                   placeholder="新しい登場人物の名前"
+                   placeholder={t('modals.character.placeholder')}
                    style={{ flex: 1 }}
                  />
-                 <button type="button" onClick={() => addCharacter()}>追加</button>
-                 <button type="button" className="primary" onClick={() => setIsCharacterMenuOpen(false)}>閉じる</button>
+                 <button type="button" onClick={() => addCharacter()}>{t('common.add')}</button>
+                 <button type="button" className="primary" onClick={() => setIsCharacterMenuOpen(false)}>{t('common.close')}</button>
                </div>
             </div>
           </div>
@@ -1331,7 +1327,7 @@ export default function SceneListPage() {
         <div className="modal-overlay" onClick={() => setIsLocationMenuOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>場所設定</h2>
+              <h2>{t('modals.location.title')}</h2>
               <button className="close-btn" onClick={() => setIsLocationMenuOpen(false)}>✕</button>
             </div>
             <div className="edit-form">
@@ -1344,7 +1340,7 @@ export default function SceneListPage() {
                       onClick={(e) => e.stopPropagation()}
                       style={{ flex: 1 }}
                     />
-                    <button type="button" className="delete-btn" onClick={() => deleteLocation(loc.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>削除</button>
+                    <button type="button" className="delete-btn" onClick={() => deleteLocation(loc.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
                   </li>
                 ))}
               </ul>
@@ -1354,11 +1350,11 @@ export default function SceneListPage() {
                   value={newLocationName}
                   onChange={(e) => setNewLocationName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') addLocation(); }}
-                  placeholder="新しい場所の名前"
+                  placeholder={t('modals.location.placeholder')}
                   style={{ flex: 1 }}
                 />
-                <button type="button" onClick={() => addLocation()}>追加</button>
-                <button type="button" className="primary" onClick={() => setIsLocationMenuOpen(false)}>閉じる</button>
+                <button type="button" onClick={() => addLocation()}>{t('common.add')}</button>
+                <button type="button" className="primary" onClick={() => setIsLocationMenuOpen(false)}>{t('common.close')}</button>
               </div>
            </div>
           </div>
@@ -1370,7 +1366,7 @@ export default function SceneListPage() {
         <div className="modal-overlay" onClick={() => setIsChapterMenuOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>章設定</h2>
+              <h2>{t('modals.chapter.title')}</h2>
               <button className="close-btn" onClick={() => setIsChapterMenuOpen(false)}>✕</button>
             </div>
             <div className="edit-form">
@@ -1383,7 +1379,7 @@ export default function SceneListPage() {
                       onClick={(e) => e.stopPropagation()}
                       style={{ flex: 1 }}
                     />
-                    <button type="button" className="delete-btn" onClick={() => deleteChapter(chap.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>削除</button>
+                    <button type="button" className="delete-btn" onClick={() => deleteChapter(chap.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
                   </li>
                 ))}
               </ul>
@@ -1393,11 +1389,11 @@ export default function SceneListPage() {
                   value={newChapterTitle}
                   onChange={(e) => setNewChapterTitle(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') addChapter(); }}
-                  placeholder="新しい章のタイトル"
+                  placeholder={t('modals.chapter.placeholder')}
                   style={{ flex: 1 }}
                 />
-                <button type="button" onClick={() => addChapter()}>追加</button>
-                <button type="button" className="primary" onClick={() => setIsChapterMenuOpen(false)}>閉じる</button>
+                <button type="button" onClick={() => addChapter()}>{t('common.add')}</button>
+                <button type="button" className="primary" onClick={() => setIsChapterMenuOpen(false)}>{t('common.close')}</button>
               </div>
            </div>
           </div>
@@ -1409,7 +1405,7 @@ export default function SceneListPage() {
         <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '500px', padding: '0' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ padding: '1.5rem 1.5rem 1rem' }}>
-              <h2>設定</h2>
+              <h2>{t('modals.settings.title')}</h2>
               <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>✕</button>
             </div>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 1.5rem' }}>
@@ -1426,7 +1422,7 @@ export default function SceneListPage() {
                 }}
                 onClick={() => setActiveSettingsTab('general')}
               >
-                基本設定
+                {t('settings.tabs.general')}
               </button>
               <button
                 style={{
@@ -1441,7 +1437,7 @@ export default function SceneListPage() {
                 }}
                 onClick={() => setActiveSettingsTab('outline')}
               >
-                箱書き
+                {t('settings.tabs.outline')}
               </button>
               <button
                 style={{
@@ -1455,55 +1451,83 @@ export default function SceneListPage() {
                 }}
                 onClick={() => setActiveSettingsTab('editor')}
               >
-                エディター
+                {t('settings.tabs.editor')}
               </button>
             </div>
 
             <div className="edit-form" style={{ padding: '1.5rem' }}>
               {activeSettingsTab === 'general' && (
-                <>
-                  <div className="form-group">
-                    <label>テーマ</label>
-                    <select 
-                      value={settings.theme}
-                      onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'system' | 'light' | 'dark' })}
-                      style={{ 
-                        backgroundColor: 'var(--bg-input)', 
-                        color: 'var(--text-main)', 
-                        border: '1px solid var(--border-subtle)',
-                        padding: '0.5rem',
-                        borderRadius: 'var(--radius-sm)',
-                        width: '100%'
-                      }}
-                    >
-                      <option value="system">システムに従う</option>
-                      <option value="light">ライトモード</option>
-                      <option value="dark">ダークモード</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <label style={{ margin: 0 }}>自動保存</label>
-                      <label className="toggle-switch">
-                        <input 
-                          type="checkbox" 
-                          checked={settings.autoSave}
-                          onChange={(e) => setSettings({ ...settings, autoSave: e.target.checked })}
-                        />
-                        <span className="slider round"></span>
-                      </label>
+                <div className="settings-section">
+                    <div className="form-group">
+                      <label>{t('settings.language')}</label>
+                      <select 
+                        value={settings.language || 'ja'}
+                        onChange={(e) => {
+                          const lang = e.target.value as 'en' | 'ja';
+                          setSettings(prev => ({ 
+                            ...prev, 
+                            language: lang,
+                            // Opt-out vertical writing for English
+                            verticalWriting: lang === 'en' ? false : prev.verticalWriting
+                          }));
+                        }}
+                        style={{ 
+                          backgroundColor: 'var(--bg-input)', 
+                          color: 'var(--text-main)', 
+                          border: '1px solid var(--border-subtle)',
+                          padding: '0.5rem',
+                          borderRadius: 'var(--radius-sm)',
+                          width: '100%'
+                        }}
+                      >
+                        <option value="ja">日本語 (Japanese)</option>
+                        <option value="en">English</option>
+                      </select>
                     </div>
-                    <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
-                      ファイルが開かれている場合、変更を自動的に上書き保存します（入力停止2秒後）。
-                    </small>
+
+                    <div className="form-group">
+                      <label>{t('settings.theme.label')}</label>
+                      <select 
+                        value={settings.theme}
+                        onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'system' | 'light' | 'dark' })}
+                        style={{ 
+                          backgroundColor: 'var(--bg-input)', 
+                          color: 'var(--text-main)', 
+                          border: '1px solid var(--border-subtle)',
+                          padding: '0.5rem',
+                          borderRadius: 'var(--radius-sm)',
+                          width: '100%'
+                        }}
+                      >
+                        <option value="system">{t('settings.theme.system')}</option>
+                        <option value="light">{t('settings.theme.light')}</option>
+                        <option value="dark">{t('settings.theme.dark')}</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ margin: 0 }}>{t('settings.autoSave.label')}</label>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={settings.autoSave}
+                            onChange={(e) => setSettings({ ...settings, autoSave: e.target.checked })}
+                          />
+                          <span className="slider round"></span>
+                        </label>
+                      </div>
+                      <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
+                        {t('settings.autoSave.description')}
+                      </small>
+                    </div>
                   </div>
-                </>
               )}
 
               {activeSettingsTab === 'outline' && (
                 <>
                   <div className="form-group">
-                    <label>時間入力モード</label>
+                    <label>{t('settings.timeInput.label')}</label>
                     <select 
                       value={settings.timeInputMode}
                       onChange={(e) => setSettings({ ...settings, timeInputMode: e.target.value as 'text' | 'datetime' })}
@@ -1516,16 +1540,15 @@ export default function SceneListPage() {
                         width: '100%'
                       }}
                     >
-                      <option value="text">テキスト入力（例：昼、夕方）</option>
-                      <option value="datetime">日時選択（カレンダー＋時計）</option>
+                      <option value="text">{t('settings.timeInput.text')}</option>
+                      <option value="datetime">{t('settings.timeInput.datetime')}</option>
                     </select>
                     <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
-                      日時選択モードでは、カレンダーと時計で正確な日時を設定できます。
-                      書き出し時は読みやすい形式に変換されます。
+                      {t('settings.timeInput.description')}
                     </small>
                   </div>
                   <div className="form-group">
-                    <label>場所入力モード</label>
+                    <label>{t('settings.placeInput.label')}</label>
                     <select 
                       value={settings.placeInputMode}
                       onChange={(e) => setSettings({ ...settings, placeInputMode: e.target.value as 'text' | 'select' })}
@@ -1538,11 +1561,11 @@ export default function SceneListPage() {
                         width: '100%'
                       }}
                     >
-                      <option value="text">テキスト入力（自由入力）</option>
-                      <option value="select">リストから選択</option>
+                      <option value="text">{t('settings.placeInput.text')}</option>
+                      <option value="select">{t('settings.placeInput.select')}</option>
                     </select>
                     <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
-                      リスト選択モードでは、「場所設定」で登録した場所から選択できます。
+                      {t('settings.placeInput.description')}
                     </small>
                   </div>
                 </>
@@ -1551,7 +1574,7 @@ export default function SceneListPage() {
               {activeSettingsTab === 'editor' && (
                 <>
                   <div className="form-group">
-                    <label>フォント</label>
+                    <label>{t('settings.editor.font')}</label>
                     <select 
                       value={settings.editorFontFamily || 'sans-serif'}
                       onChange={(e) => setSettings({ ...settings, editorFontFamily: e.target.value })}
@@ -1564,10 +1587,10 @@ export default function SceneListPage() {
                         width: '100%'
                       }}
                     >
-                      <option value="sans-serif">ゴシック体 (標準)</option>
-                      <option value="serif">明朝体</option>
-                      <option value='"Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Hiragino Mincho Pro", "MS PMincho", "MS Mincho", serif'>游明朝 (縦書き推奨)</option>
-                      <option value="monospace">等幅フォント</option>
+                      <option value="sans-serif">{t('settings.editor.gothic')}</option>
+                      <option value="serif">{t('settings.editor.mincho')}</option>
+                      <option value='"Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Hiragino Mincho Pro", "MS PMincho", "MS Mincho", serif'>游明朝 ({t('settings.editor.verticalWriting')})</option>
+                      <option value="monospace">{t('settings.editor.monospace')}</option>
                       {systemFonts.length > 0 && (
                         <>
                           <option disabled>──────────</option>
@@ -1579,7 +1602,7 @@ export default function SceneListPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>フォントサイズ (px)</label>
+                    <label>{t('settings.editor.fontSize')}</label>
                     <input 
                       type="number" 
                       min="10" 
@@ -1596,25 +1619,27 @@ export default function SceneListPage() {
                       }}
                     />
                   </div>
-                  <div className="form-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox"
-                        checked={settings.verticalWriting || false}
-                        onChange={(e) => setSettings({ ...settings, verticalWriting: e.target.checked })}
-                        style={{ width: 'auto', cursor: 'pointer' }}
-                      />
-                      <span>縦書きモード（実験中）</span>
-                    </label>
-                    <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
-                      日本語小説向けの縦書き表示に切り替えます。行頭禁則処理が適用されます。
-                    </small>
-                  </div>
+                  {settings.language !== 'en' && (
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox"
+                          checked={settings.verticalWriting || false}
+                          onChange={(e) => setSettings({ ...settings, verticalWriting: e.target.checked })}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                        <span>{t('settings.editor.verticalWriting')}</span>
+                      </label>
+                      <small style={{ color: 'var(--text-muted)', marginTop: '0.5rem', display: 'block' }}>
+                        {t('settings.editor.verticalWritingDesc')}
+                      </small>
+                    </div>
+                  )}
                 </>
               )}
             </div>
             <div className="modal-footer" style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)' }}>
-              <button className="primary-btn" onClick={() => setIsSettingsOpen(false)}>閉じる</button>
+              <button className="primary-btn" onClick={() => setIsSettingsOpen(false)}>{t('common.close')}</button>
             </div>
           </div>
         </div>
@@ -1628,12 +1653,13 @@ export default function SceneListPage() {
               {/* Logo placeholder or Icon could go here */}
             </div>
             <div style={{ padding: '2rem 1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>箱書きエディタ</h2>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>HakoGraph</h2>
               <p style={{ color: 'var(--text-sub)', marginBottom: '1.5rem' }}>Version {appVersion}</p>
               
               <p style={{ fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
-                シンプルで使いやすい<br/>
-                小説・脚本構成作成ツール
+                {t('modals.about.description').split('\n').map((line, i) => (
+                  <span key={i}>{line}<br/></span>
+                ))}
               </p>
               
               <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
@@ -1641,7 +1667,7 @@ export default function SceneListPage() {
               </p>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button className="primary" onClick={() => setIsAboutOpen(false)} style={{ minWidth: '120px' }}>閉じる</button>
+              <button className="primary" onClick={() => setIsAboutOpen(false)} style={{ minWidth: '120px' }}>{t('common.close')}</button>
             </div>
           </div>
         </div>

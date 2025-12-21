@@ -1,110 +1,109 @@
-# 箱書きエディタ
+[English] | [日本語](README.ja.md)
 
-Tauri + React + TypeScript で構築された箱書きエディタです。
+# HakoGraph
 
-小説を書いてて、僕が欲しかったものをつくりました。
+HakoGraph is a "Hakogaki" (plotting/outlining) editor built with Tauri, React, and TypeScript.
 
-Excelで箱書きを作っても、シーンごとのファイルにするのは手動！
+I created this tool because I wanted it for my own novel writing process.
 
-こんな地獄からは抜け出したかった。
+Even if you create a plot in Excel, manual labor is required to turn each scene into a separate file! I wanted to escape that nightmare.
 
-## 機能
+## Features
 
-- **シーン管理**: グリッド表示でのシーン一覧確認
+- **Scene Management**: Overview of scenes in a grid display.
 ![alt text](screenshot/app.png)
 
-- **詳細編集**: モーダルによる詳細項目の編集
+- **Detailed Editing**: Edit scene details via a modal.
 ![alt text](screenshot/add.png)
 
-- **シーンの入れ替え**: シーンの入れ替えはドラッグアンドドロップで行えます。
+- **Drag and Drop**: Reorder scenes easily using drag and drop.
 
-- **書き出し**: 書き出しを選んで、フォルダを選ぶとそこに「数字_章タイトルフォルダ」が作られ、シーン名のついたテキストファイルが作成されます。
+- **Export**: Choose an export location, and the tool will automatically create folders like "Number_ChapterTitle" and populate them with text files named after each scene.
 
 ![alt text](screenshot/folder.png)
 
-テキストファイルの中身は以下のようになります。
+The content of the text files looks like this:
 
 ![alt text](screenshot/txt.png)
 
-- **インテリジェントなファイル追跡** (v0.10.0+):
-  - シーンの順序を変更すると、ファイル番号が自動的に更新されます
-  - 章を変更すると、ファイルが自動的に新しい章フォルダに移動します
-  - タイトルを変更すると、ファイル名が自動的に更新されます
-  - すべての操作で執筆中の本文が保持されます
+- **Intelligent File Tracking** (v0.10.0+):
+  - File numbers are automatically updated when scene order changes.
+  - Files are automatically moved to new chapter folders when a scene's chapter is updated.
+  - File names are automatically updated when titles change.
+  - Your manuscript content is preserved through all operations.
 
-- **縦書き機能（実験的実装）** (v0.20.0+):
-- 実験的に搭載してみました。
-- Chromium系で縦書きは鬼門なのでまだおまけ程度です。
+- **Vertical Writing (Experimental)** (v0.20.0+):
+- Basic vertical layout support for Japanese novels.
+- Still experimental as vertical text can be tricky in Chromium-based environments.
 
-## 必要環境
+## Requirements
 
-- **インストーラーをダウンロードする場合**:
+- **Downloading the Installer**:
 
-インストールするだけで普通に使えます。
+Just install and run.
 
-**MacOSで「開発元が未確認」の警告が出る（もしくは壊れていると言われる）場合**:
+**For MacOS "Unidentified Developer" or "Damaged" Warnings**:
 
-現在は正式なAppleの電子署名を行っていないため、ダウンロードして開こうとすると、macOSのセキュリティ機能により「開発元が未確認のため開けません」や「ファイルが壊れています」といった警告が出ることがあります。
+Since the app is not currently signed with an official Apple Developer certificate, macOS security might block it or flag it as damaged.
 
-- **回避方法**:
-  1. 右クリック（またはControlキー + クリック）する。
-  2. メニューから「開く」を選択する。
-  3. 出てきたダイアログで再度「開く」ボタンを押す。
+- **Workaround**:
+  1. Right-click (or Control + Click) the app.
+  2. Select "Open" from the menu.
+  3. Click "Open" again in the dialog that appears.
 
-これでうまくいかないときは
-ターミナルから（パスは普通にApplicationsに入れたときのものです）
+If that doesn't work, run this command in the terminal (assuming it's in Applications):
 
 ```bash
-xattr -cr /Applications/HakogakiEditor.app
+xattr -cr /Applications/HakoGraph.app
 ```
 
-**Linux版**:
+**Linux Version**:
 
-Github Actionsで解決済✨️
+Supported via Github Actions✨️
 
-- **そのままで動かすなら**:
+- **Running from Source**:
 - Node.js (v16+)
-- Rust (Tauriのビルドに必要)
+- Rust (required for Tauri build)
 
-## 開発（ローカル実行）
+## Development (Local Execution)
 
 ```bash
 npm install
 npm run dev
 ```
 
-## ビルド（インストーラー作成）
+## Build (Creating Installers)
 
-WindowsまたMacそれぞれの環境で以下を実行してください。
+Run the following in your respective Windows or Mac environment:
 
 ```bash
 npm run tauri build
 ```
 
-- Mac: `.dmg` ファイルが生成されます (`src-tauri/target/release/bundle/dmg/`)
-- Windows: `.msi` または `.exe` が生成されます (`src-tauri/target/release/bundle/msi/`)
+- Mac: Generates a `.dmg` file (`src-tauri/target/release/bundle/dmg/`)
+- Windows: Generates a `.msi` or `.exe` file (`src-tauri/target/release/bundle/msi/`)
 
-## データ構造
+## Data Structure
 
-ただのjsonなのでそちらから編集することも可能です。
+Data is stored as plain JSON, so you can edit it directly if needed.
 
-シーンには以下の項目が含まれます：
+Scenes include the following fields:
 
-- シーンタイトル
-- 章タイトル
-- 登場人物
-- 時間
-- 狙いと役割
-- 詳細なあらすじ
-- 裏設定
+- Scene Title
+- Chapter Title
+- Characters
+- Time
+- Aim & Role
+- Detailed Summary
+- Backstory/Notes
 
-## ライセンス
+## License
 
-このプロジェクトはMITライセンスの下で公開されています。詳細はLICENSEファイルをご覧ください。
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-### 使用している外部ライブラリ
+### Libraries Used
 
-このアプリケーションは以下のオープンソースライブラリを使用しています：
+This application uses the following open-source libraries:
 
 #### MIT License
 
@@ -116,6 +115,9 @@ npm run tauri build
 - **dnd-kit** (Copyright (c) 2021, Claudéric Demers)
   - @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
   - <https://github.com/clauderic/dnd-kit>
+- **i18next** (Copyright (c) 2024 i18next)
+  - i18next, react-i18next, i18next-browser-languagedetector
+  - <https://github.com/i18next/react-i18next>
 
 #### MIT OR Apache-2.0 License
 
@@ -128,4 +130,4 @@ npm run tauri build
 - **tslib** (Copyright (c) Microsoft Corporation)
   - <https://github.com/Microsoft/tslib>
 
-各ライブラリの詳細なライセンス条文は、それぞれのリポジトリまたは`node_modules`内のLICENSEファイルをご参照ください。
+Please refer to the respective repositories or the LICENSE files in `node_modules` for detailed license terms.

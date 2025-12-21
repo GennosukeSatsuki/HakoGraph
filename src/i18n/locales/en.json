@@ -1,0 +1,147 @@
+{
+  "common": {
+    "save": "Save",
+    "close": "Close",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "warning": "Warning",
+    "loading": "Loading..."
+  },
+  "menu": {
+    "file": "File",
+    "newProject": "New Project",
+    "saveProject": "Save Project",
+    "saveAs": "Save As...",
+    "openProject": "Open Project...",
+    "export": "Export to Text...",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "actions": {
+    "characterSettings": "Characters",
+    "chapterSettings": "Chapters",
+    "locationSettings": "Locations",
+    "addScene": "Add Scene",
+    "openEditor": "Open Editor"
+  },
+  "scene": {
+    "sceneNo": "Scene {{no}}",
+    "title": "Title",
+    "noTitle": "(Untitled)",
+    "chapter": "Chapter",
+    "characters": "Characters",
+    "time": "Time",
+    "place": "Place",
+    "aim": "Aim & Role",
+    "summary": "Summary",
+    "note": "Note",
+    "noSummary": "No summary",
+    "placeholder": {
+      "title": "Scene Title",
+      "summary": "Detailed summary...",
+      "note": "Backstory/Notes..."
+    }
+  },
+  "settings": {
+    "tabs": {
+      "general": "General",
+      "outline": "Outline",
+      "editor": "Editor"
+    },
+    "language": "Language",
+    "theme": {
+      "label": "Theme",
+      "system": "System Default",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "autoSave": {
+      "label": "Auto Save",
+      "description": "Automatically overwrite the file when modified (2s after typing stops)."
+    },
+    "timeInput": {
+      "label": "Time Input Mode",
+      "text": "Text Input (e.g., Evening, Day)",
+      "datetime": "Date Time Picker",
+      "description": "In Date Time mode, you can select accurate date and time. It will be formatted for export."
+    },
+    "placeInput": {
+      "label": "Place Input Mode",
+      "text": "Text Input (Free)",
+      "select": "Select from List",
+      "description": "In list mode, you can select from locations registered in 'Location Settings'."
+    },
+    "editor": {
+      "font": "Font",
+      "fontSize": "Font Size (px)",
+      "verticalWriting": "Vertical Writing (Experimental)",
+      "verticalWritingDesc": "Switch to vertical layout for Japanese novels. English text might not display well.",
+      "mincho": "Mincho (Serif)",
+      "gothic": "Gothic (Sans-serif)",
+      "monospace": "Monospace"
+    }
+  },
+  "modals": {
+    "editScene": {
+      "title": "Edit Scene"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "about": {
+      "title": "About HakoGraph",
+      "description": "Simple and easy-to-use\nplotting and writing tool"
+    },
+    "character": {
+      "title": "Character Settings",
+      "placeholder": "New character name"
+    },
+    "chapter": {
+      "title": "Chapter Settings",
+      "placeholder": "New chapter title"
+    },
+    "location": {
+      "title": "Location Settings",
+      "placeholder": "New location name"
+    }
+  },
+  "messages": {
+    "deleteConfirm": "Are you sure you want to delete this?",
+    "deleteChapterDesc": "Chapter setting for scenes using this will be cleared.",
+    "newProjectConfirm": "Create a new project?\n\nUnsaved changes will be lost.",
+    "exportSuccess": "Export completed.",
+    "exportFailed": "Export failed: {{error}}",
+    "saved": "Saved successfully.",
+    "saveFailed": "Save failed",
+    "loadSuccess": "Loaded successfully.",
+    "fileLoadFailed": "Load failed",
+    "fileFormatError": "Invalid file format.",
+    "migrationSuccess": "Loaded successfully (Legacy format converted).",
+    "mobileExportWarning": "On mobile, files will be exported to the following directory:\n{{dir}}",
+    "exportDirFailed": "Failed to get export directory.",
+    "projectDataNotFound": "Project data not found. Please open a file from the list.",
+    "sceneNotFound": "Scene not found.",
+    "filePathNotSet": "File path not set.",
+    "processFailed": "Process failed",
+    "exportNeeded": "Export Needed",
+    "exportNeededDesc": "This scene has not been exported yet.\nPlease run 'Export to Text...' from the 'File' menu.",
+    "backToList": "Back to List",
+    "writingComplete": "Mark as Complete",
+    "writingCompleteConfirm": "The plot section (above the separator) will be deleted, and only the body text will remain.\nThis action cannot be undone.",
+    "separatorNotFound": "Separator not found. It might already be marked as complete.",
+    "bodyNotFound": "Body text not found.",
+    "markedComplete": "Marked as complete. Plot section deleted.",
+    "unsavedChanges": "Unsaved changes exist. Save before leaving?",
+    "unsavedChangesConfirm": "Unsaved changes exist. Save before leaving?\n\n'OK': Save changes\n'Cancel': Discard changes"
+  },
+  "editor": {
+    "totalChars": "Total Chars",
+    "thisScene": "This Scene",
+    "todayProgress": "Today's Work",
+    "charUnit": "chars",
+    "placeholder": "Write your story here..."
+  }
+}

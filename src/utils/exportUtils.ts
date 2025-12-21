@@ -41,6 +41,7 @@ export interface Chapter {
 }
 
 export interface AppSettings {
+  language: 'en' | 'ja';
   timeInputMode: 'text' | 'datetime';
   placeInputMode: 'text' | 'select';
   autoSave: boolean;
@@ -49,6 +50,7 @@ export interface AppSettings {
   editorFontSize?: number;
   verticalWriting?: boolean;
 }
+
 
 export interface DailyProgress {
   date: string;
@@ -68,12 +70,12 @@ export interface StoryData {
 }
 
 // Helper function to format datetime for display
-export const formatTimeForDisplay = (time: string, mode?: 'text' | 'datetime'): string => {
+export const formatTimeForDisplay = (time: string, mode?: 'text' | 'datetime', lang: 'en' | 'ja' = 'ja'): string => {
   if (!time) return '-';
   if (mode === 'datetime') {
     try {
       const date = new Date(time);
-      return date.toLocaleString('ja-JP', { 
+      return date.toLocaleString(lang === 'ja' ? 'ja-JP' : 'en-US', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric', 
@@ -86,6 +88,7 @@ export const formatTimeForDisplay = (time: string, mode?: 'text' | 'datetime'): 
   }
   return time;
 };
+
 
 /**
  * Executes the export (deploy) process for the project.
@@ -118,10 +121,36 @@ export const exportProject = async (data: StoryData, baseDir: string): Promise<{
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i];
     
+    // Localization for export content
+    const i18nExport = {
+      ja: {
+        noChapter: '無題の章',
+        noTitle: '無題のシーン',
+        place: '場所',
+        time: '時間',
+        characters: '登場人物',
+        aim: '狙いと役割',
+        summary: '詳細なあらすじ',
+        note: '裏設定',
+        separatorNote: '本文執筆完了後に消してください'
+      },
+      en: {
+        noChapter: 'Untitled Chapter',
+        noTitle: 'Untitled Scene',
+        place: 'Place',
+        time: 'Time',
+        characters: 'Characters',
+        aim: 'Aim & Role',
+        summary: 'Summary',
+        note: 'Note',
+        separatorNote: 'Delete after writing is complete'
+      }
+    }[data.settings?.language || 'ja'];
+
     // Get current chapter info
     const currentChapterId = scene.chapterId || '';
     const currentChapter = updatedChapters.find(c => c.id === currentChapterId);
-    const currentChapterTitle = currentChapter?.title || scene.chapter || '無題の章';
+    const currentChapterTitle = currentChapter?.title || scene.chapter || i18nExport.noChapter;
     
     // File number is always current position
     const fileNumberToUse = i + 1;
@@ -194,7 +223,7 @@ export const exportProject = async (data: StoryData, baseDir: string): Promise<{
 
     // Create File Name: (FileNum)_(SceneName).txt
     const fileNum = fileNumberToUse.toString().padStart(3, '0');
-    const safeTitle = scene.title.trim() || '無題のシーン';
+    const safeTitle = scene.title.trim() || i18nExport.noTitle;
     const fileName = `${fileNum}_${safeTitle}.txt`;
     const filePath = `${folderPath}${sep}${fileName}`;
     
@@ -204,7 +233,7 @@ export const exportProject = async (data: StoryData, baseDir: string): Promise<{
       const oldChapterId = scene.deploymentInfo.chapterId;
       const oldChapter = updatedChapters.find(c => c.id === oldChapterId);
       const oldChapterDeploymentNumber = oldChapter?.deploymentNumber || chapterDeploymentMap.get(oldChapterId) || 0;
-      const oldChapterTitle = oldChapter?.title || '無題の章';
+      const oldChapterTitle = oldChapter?.title || i18nExport.noChapter;
       
       const oldNumStr = oldChapterDeploymentNumber.toString().padStart(2, '0');
       const oldFolderName = `${oldNumStr}_${oldChapterTitle.trim()}`;
@@ -251,17 +280,17 @@ export const exportProject = async (data: StoryData, baseDir: string): Promise<{
     };
     
     // Create box-writing metadata content with separator note
-    const separator = '──────────────(本文執筆完了後に消してください)──────────────';
-    const boxContent = `**場所** ${scene.place}
-**時間** ${formatTimeForDisplay(scene.time, scene.timeMode)}
+    const separator = `──────────────(${i18nExport.separatorNote})──────────────`;
+    const boxContent = `**${i18nExport.place}** ${scene.place}
+**${i18nExport.time}** ${formatTimeForDisplay(scene.time, scene.timeMode, data.settings?.language)}
 
-**登場人物** ${scene.characterIds?.map(id => characters.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters}
+**${i18nExport.characters}** ${scene.characterIds?.map(id => characters.find(c => c.id === id)?.name).filter(Boolean).join(', ') || scene.characters}
 
-**狙いと役割** ${scene.aim}
+**${i18nExport.aim}** ${scene.aim}
 
-**詳細なあらすじ** ${scene.summary}
+**${i18nExport.summary}** ${scene.summary}
 
-**裏設定** ${scene.note}
+**${i18nExport.note}** ${scene.note}
 
 ${separator}
 

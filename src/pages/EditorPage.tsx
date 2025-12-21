@@ -1,9 +1,12 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { exists, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import TiptapEditor from '../components/TiptapEditor';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function EditorPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [content, setContent] = useState('');
@@ -51,7 +54,7 @@ export default function EditorPage() {
       // ローカルストレージからシーンデータを取得
       const savedData = localStorage.getItem('storyData');
       if (!savedData) {
-        setError('プロジェクトデータが見つかりません。箱書き一覧に戻ってファイルを開いてください。');
+        setError(t('messages.projectDataNotFound'));
         setLoading(false);
         return;
       }
@@ -61,12 +64,15 @@ export default function EditorPage() {
       // 設定を読み込む
       if (data.settings) {
         setSettings(data.settings);
+        if (data.settings.language && i18n.language !== data.settings.language) {
+          i18n.changeLanguage(data.settings.language);
+        }
       }
 
       const sceneData = data.scenes?.find((s: any) => s.id === id);
       
       if (!sceneData) {
-        setError('シーンが見つかりません。');
+        setError(t('messages.sceneNotFound'));
         setLoading(false);
         return;
       }
@@ -128,14 +134,14 @@ export default function EditorPage() {
       setLoading(false);
     } catch (e) {
       console.error('ファイル読み込みエラー:', e);
-      setError(`ファイルの読み込みに失敗しました: ${e}`);
+      setError(`${t('messages.fileLoadFailed')}: ${e}`);
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
     if (!filePath) {
-      alert('ファイルパスが設定されていません');
+      alert(t('messages.filePathNotSet'));
       return;
     }
 
@@ -147,27 +153,27 @@ export default function EditorPage() {
       const charCount = getBodyCharCount(content);
       localStorage.setItem(`sceneCharCount_${id}`, charCount.toString());
       
-      alert('保存しました');
+      alert(t('messages.saved'));
     } catch (e) {
-      alert(`保存に失敗しました: ${e}`);
+      alert(`${t('messages.saveFailed')}: ${e}`);
     }
   };
 
   const handleMarkComplete = async () => {
     if (!filePath) {
-      alert('ファイルパスが設定されていません');
+      alert(t('messages.filePathNotSet'));
       return;
     }
 
     // 確認ダイアログ（Tauriのaskを使用）
     const { ask } = await import('@tauri-apps/plugin-dialog');
     const confirmed = await ask(
-      '箱書き部分（セパレーターより上）が削除され、本文のみになります。\nこの操作は元に戻せません。',
+      t('messages.markCompleteConfirm'),
       { 
-        title: '執筆完了', 
+        title: t('messages.writingComplete'), 
         kind: 'warning',
-        okLabel: '執筆完了',
-        cancelLabel: 'キャンセル'
+        okLabel: t('messages.writingComplete'),
+        cancelLabel: t('common.cancel')
       }
     );
     
@@ -187,7 +193,7 @@ export default function EditorPage() {
       }
       
       if (separatorIndex === -1) {
-        alert('セパレーターが見つかりません。既に執筆完了済みの可能性があります。');
+        alert(t('messages.separatorNotFound'));
         return;
       }
 
@@ -195,7 +201,7 @@ export default function EditorPage() {
       const afterSeparator = content.substring(separatorIndex);
       const bodyStart = afterSeparator.indexOf('\n');
       if (bodyStart === -1) {
-        alert('本文が見つかりません。');
+        alert(t('messages.bodyNotFound'));
         return;
       }
       
@@ -215,9 +221,9 @@ export default function EditorPage() {
       // 進捗管理: startCharCountは更新しない（進捗を維持）
       // 箱書き部分が削除されても、今日書いた文字数はそのまま維持される
       
-      alert('執筆完了としてマークしました。箱書き部分を削除しました。');
+      alert(t('messages.markedComplete'));
     } catch (e) {
-      alert(`処理に失敗しました: ${e}`);
+      alert(`${t('messages.processFailed')}: ${e}`);
     }
   };
 
@@ -287,12 +293,12 @@ export default function EditorPage() {
     const hasChanges = content !== originalContent;
     
     if (hasChanges) {
-      const shouldSave = confirm('変更が保存されていません。保存してから戻りますか？\n\n「OK」: 変更を保存\n「Cancel」: 変更を破棄');
+      const shouldSave = confirm(t('messages.unsavedChangesConfirm'));
       
       if (shouldSave) {
         // 保存してから戻る
         if (!filePath) {
-          alert('ファイルパスが設定されていません');
+          alert(t('messages.filePathNotSet'));
           return;
         }
         
@@ -300,7 +306,7 @@ export default function EditorPage() {
           await writeTextFile(filePath, content);
           navigate('/');
         } catch (e) {
-          alert(`保存に失敗しました: ${e}`);
+          alert(`${t('messages.saveFailed')}: ${e}`);
         }
       } else {
         // 保存せずに戻る
@@ -321,7 +327,7 @@ export default function EditorPage() {
         height: '100vh',
         fontSize: '18px'
       }}>
-        読み込み中...
+        {t('common.loading')}
       </div>
     );
   }
@@ -352,7 +358,7 @@ export default function EditorPage() {
             cursor: 'pointer'
           }}
         >
-          箱書き一覧に戻る
+          {t('messages.backToList')}
         </button>
       </div>
     );
@@ -369,7 +375,7 @@ export default function EditorPage() {
         padding: '40px',
         textAlign: 'center'
       }}>
-        <h2 style={{ marginBottom: '20px' }}>📝 書き出しが必要です</h2>
+        <h2 style={{ marginBottom: '20px' }}>📝 {t('messages.exportNeeded')}</h2>
         <p style={{ 
           fontSize: '16px', 
           lineHeight: '1.8',
@@ -377,9 +383,9 @@ export default function EditorPage() {
           maxWidth: '500px',
           color: 'var(--text-sub)'
         }}>
-          このシーンはまだ書き出されていません。<br />
-          箱書き一覧に戻って、「ファイル」メニューから<br />
-          「書き出し...」を実行してください。
+          {t('messages.exportNeededDesc').split('\n').map((line, i) => (
+            <span key={i}>{line}<br /></span>
+          ))}
         </p>
         <button 
           onClick={handleBackToList}
@@ -393,7 +399,7 @@ export default function EditorPage() {
             cursor: 'pointer'
           }}
         >
-          箱書き一覧に戻る
+          {t('messages.backToList')}
         </button>
       </div>
     );
@@ -413,7 +419,7 @@ export default function EditorPage() {
         alignItems: 'center',
         marginBottom: '20px'
       }}>
-        <h1>シーン{scene?.sceneNo} {scene?.title || '(無題)'}</h1>
+        <h1>{t('scene.sceneNo', { no: scene?.sceneNo })} {scene?.title || t('scene.noTitle')}</h1>
         <button 
           onClick={handleBackToList}
           style={{
@@ -422,7 +428,7 @@ export default function EditorPage() {
             cursor: 'pointer'
           }}
         >
-          箱書き一覧に戻る
+          {t('messages.backToList')}
         </button>
       </div>
       
@@ -430,7 +436,7 @@ export default function EditorPage() {
         content={content} 
         onChange={setContent} 
         settings={settings}
-        placeholder="ここに本文を書いてください..."
+        placeholder={t('editor.placeholder')}
       />
       
       <div style={{ 
@@ -441,7 +447,7 @@ export default function EditorPage() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div style={{ fontSize: '1.1em', fontWeight: 'bold' }}>
-            総文字数: {(() => {
+            {t('editor.totalChars')}: {(() => {
               // 全シーンの文字数を計算
               const savedData = localStorage.getItem('storyData');
               if (!savedData) return 0;
@@ -473,12 +479,12 @@ export default function EditorPage() {
               totalChars += getBodyCharCount(content);
               
               return totalChars.toLocaleString();
-            })()}字
+            })()}{t('editor.charUnit')}
           </div>
           <div>
-            このシーン: {getBodyCharCount(content).toLocaleString()}字
+            {t('editor.thisScene')}: {getBodyCharCount(content).toLocaleString()}{t('editor.charUnit')}
             <span style={{ marginLeft: '1rem', color: 'var(--text-sub)', fontSize: '0.9em' }}>
-              （今日の執筆: {getTotalTodayProgress() >= 0 ? '+' : ''}{getTotalTodayProgress().toLocaleString()}字）
+              （{t('editor.todayProgress')}: {getTotalTodayProgress() >= 0 ? '+' : ''}{getTotalTodayProgress().toLocaleString()}{t('editor.charUnit')}）
             </span>
           </div>
         </div>
@@ -495,7 +501,7 @@ export default function EditorPage() {
               cursor: 'pointer'
             }}
           >
-            ✓ 執筆完了
+            ✓ {t('messages.writingComplete')}
           </button>
           <button 
             onClick={handleSave}
@@ -509,7 +515,7 @@ export default function EditorPage() {
               cursor: 'pointer'
             }}
           >
-            保存
+            {t('common.save')}
           </button>
         </div>
       </div>

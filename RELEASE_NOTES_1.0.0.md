@@ -1,7 +1,7 @@
-# Release Notes - v1.0.0
+# HakoGraph - v1.0.0
 
 祝！正式リリース！
-「箱書きエディタ (Hakogaki Editor)」が正式版 v1.0.0 に到達しました。
+「HakoGraph」が正式版 v1.0.0 に到達しました。
 
 ## [1.0.0] - 2025-12-20
 

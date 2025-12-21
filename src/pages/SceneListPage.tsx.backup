@@ -50,12 +50,6 @@ import {
 import { SettingsModal, AboutModal } from '../components/modals/SettingsModal';
 import { EditSceneModal } from '../components/modals/EditSceneModal';
 
-// Custom Hooks (to be integrated)
-// import { useSceneManagement } from '../hooks/useSceneManagement';
-// import { useDataManagement } from '../hooks/useDataManagement';
-// import { useDragAndDrop } from '../hooks/useDragAndDrop';
-// import { useTimeInput } from '../hooks/useTimeInput';
-
 const INITIAL_SCENE: Scene = {
   id: '1',
   sceneNo: 1,

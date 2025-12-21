@@ -476,6 +476,58 @@ button.secondary:hover {
   border-color: var(--text-muted);
 }
 
+/* Character Tags */
+.character-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.character-tag {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.character-tag:hover {
+  border-color: var(--primary);
+  background-color: var(--bg-hover);
+}
+
+.character-tag.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.character-tag.active:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.add-tag-btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-subtle);
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-tag-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--bg-hover);
+}
+
 /* Character Management */
 .character-checkbox-list input[type="checkbox"] {
   width: auto;

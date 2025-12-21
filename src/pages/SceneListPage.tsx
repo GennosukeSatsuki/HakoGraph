@@ -42,6 +42,11 @@ import {
 
 
 import { SortableSceneCard, SceneCardOverlay } from '../components/SceneCard';
+import { 
+  CharacterManagementModal, 
+  LocationManagementModal, 
+  ChapterManagementModal 
+} from '../components/modals/ManagementModals';
 
 const INITIAL_SCENE: Scene = {
   id: '1',
@@ -1206,128 +1211,38 @@ export default function SceneListPage() {
         </div>
       )}
 
-      {/* Character Management Modal */}
-      {isCharacterMenuOpen && (
-        <div className="modal-overlay" onClick={() => setIsCharacterMenuOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t('modals.character.title')}</h2>
-              <button className="close-btn" onClick={() => setIsCharacterMenuOpen(false)}>✕</button>
-            </div>
-            <div className="edit-form">
-               <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
-                 {characters.map(char => (
-                   <li key={char.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem' }}>
-                     <input 
-                       value={char.name}
-                       onChange={(e) => updateCharacter(char.id, e.target.value)}
-                       onClick={(e) => e.stopPropagation()}
-                       style={{ flex: 1 }}
-                     />
-                     <button type="button" className="delete-btn" onClick={() => deleteCharacter(char.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
-                   </li>
-                 ))}
-               </ul>
-               <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                 <input 
-                   type="text"
-                   value={newCharacterName}
-                   onChange={(e) => setNewCharacterName(e.target.value)}
-                   onKeyDown={(e) => { if (e.key === 'Enter') addCharacter(); }}
-                   placeholder={t('modals.character.placeholder')}
-                   style={{ flex: 1 }}
-                 />
-                 <button type="button" onClick={() => addCharacter()}>{t('common.add')}</button>
-                 <button type="button" className="primary" onClick={() => setIsCharacterMenuOpen(false)}>{t('common.close')}</button>
-               </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CharacterManagementModal
+        isOpen={isCharacterMenuOpen}
+        characters={characters}
+        newCharacterName={newCharacterName}
+        onClose={() => setIsCharacterMenuOpen(false)}
+        onUpdate={updateCharacter}
+        onDelete={deleteCharacter}
+        onAdd={addCharacter}
+        onNewNameChange={setNewCharacterName}
+      />
 
-      {/* Location Management Modal */}
-      {isLocationMenuOpen && (
-        <div className="modal-overlay" onClick={() => setIsLocationMenuOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t('modals.location.title')}</h2>
-              <button className="close-btn" onClick={() => setIsLocationMenuOpen(false)}>✕</button>
-            </div>
-            <div className="edit-form">
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {locations.map(loc => (
-                  <li key={loc.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                    <input 
-                      value={loc.name}
-                      onChange={(e) => updateLocation(loc.id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ flex: 1 }}
-                    />
-                    <button type="button" className="delete-btn" onClick={() => deleteLocation(loc.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
-                  </li>
-                ))}
-              </ul>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input 
-                  type="text"
-                  value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') addLocation(); }}
-                  placeholder={t('modals.location.placeholder')}
-                  style={{ flex: 1 }}
-                />
-                <button type="button" onClick={() => addLocation()}>{t('common.add')}</button>
-                <button type="button" className="primary" onClick={() => setIsLocationMenuOpen(false)}>{t('common.close')}</button>
-              </div>
-           </div>
-          </div>
-        </div>
-      )}
+      <LocationManagementModal
+        isOpen={isLocationMenuOpen}
+        locations={locations}
+        newLocationName={newLocationName}
+        onClose={() => setIsLocationMenuOpen(false)}
+        onUpdate={updateLocation}
+        onDelete={deleteLocation}
+        onAdd={addLocation}
+        onNewNameChange={setNewLocationName}
+      />
 
-      {/* Settings Modal */}
-      {isChapterMenuOpen && (
-        <div className="modal-overlay" onClick={() => setIsChapterMenuOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t('modals.chapter.title')}</h2>
-              <button className="close-btn" onClick={() => setIsChapterMenuOpen(false)}>✕</button>
-            </div>
-            <div className="edit-form">
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {chapters.map(chap => (
-                  <li key={chap.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                    <input 
-                      type="color"
-                      value={chap.color || '#5468ff'}
-                      onChange={(e) => updateChapter(chap.id, { color: e.target.value })}
-                      style={{ width: '40px', height: '30px', padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
-                    />
-                    <input 
-                      value={chap.title}
-                      onChange={(e) => updateChapter(chap.id, { title: e.target.value })}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ flex: 1 }}
-                    />
-                    <button type="button" className="delete-btn" onClick={() => deleteChapter(chap.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>{t('common.delete')}</button>
-                  </li>
-                ))}
-              </ul>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input 
-                  type="text"
-                  value={newChapterTitle}
-                  onChange={(e) => setNewChapterTitle(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') addChapter(); }}
-                  placeholder={t('modals.chapter.placeholder')}
-                  style={{ flex: 1 }}
-                />
-                <button type="button" onClick={() => addChapter()}>{t('common.add')}</button>
-                <button type="button" className="primary" onClick={() => setIsChapterMenuOpen(false)}>{t('common.close')}</button>
-              </div>
-           </div>
-          </div>
-        </div>
-      )}
+      <ChapterManagementModal
+        isOpen={isChapterMenuOpen}
+        chapters={chapters}
+        newChapterTitle={newChapterTitle}
+        onClose={() => setIsChapterMenuOpen(false)}
+        onUpdate={updateChapter}
+        onDelete={deleteChapter}
+        onAdd={addChapter}
+        onNewTitleChange={setNewChapterTitle}
+      />
 
       {/* Settings Modal */}
       {isSettingsOpen && (

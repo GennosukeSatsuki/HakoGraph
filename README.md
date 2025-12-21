@@ -19,6 +19,12 @@ Even if you create a plot in Excel, manual labor is required to turn each scene 
 - **Scene Management**: Overview of scenes in a grid display.
 ![alt text](screenshot/app.png)
 
+- **Beautiful Appearance with Textures**: Overview of scenes in a grid display with a textured look.
+![alt text](screenshot/app_light.png)
+![alt text](screenshot/app_dark.png)
+
+- **Written Status Check**: Automatically marks scenes as "written" when the outline section is removed from the text file.
+
 - **Detailed Editing**: Edit scene details via a modal.
 ![alt text](screenshot/add.png)
 

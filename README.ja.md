@@ -19,6 +19,12 @@ Excelで箱書きを作っても、シーンごとのファイルにするのは
 - **シーン管理**: グリッド表示でのシーン一覧確認
 ![alt text](screenshot/app.png)
 
+- **テクスチャを使った美しい外見**: グリッド表示でのシーン一覧確認
+![alt text](screenshot/app_light.png)
+![alt text](screenshot/app_dark.png)
+
+- **執筆済みチェック機能**: テキストファイルから箱書き部分を削除すると自動で執筆済みと判定してマークします
+
 - **詳細編集**: モーダルによる詳細項目の編集
 ![alt text](screenshot/add.png)
 

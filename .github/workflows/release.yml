@@ -208,20 +208,36 @@ jobs:
           npm install twitter-api-v2
           node -e "
           const { TwitterApi } = require('twitter-api-v2');
+          const fs = require('fs');
+          
           const client = new TwitterApi({
             appKey: process.env.TWITTER_CONSUMER_API_KEY,
             appSecret: process.env.TWITTER_CONSUMER_API_SECRET,
             accessToken: process.env.TWITTER_ACCESS_TOKEN,
             accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
           });
-          const msg = '📦 HakoGraph ' + process.env.TAG_NAME + ' Released!\nA powerful plotting tool for novelists & screenwriters.\n\n' +
-                      '小説・脚本の構成作成ツール HakoGraph ' + process.env.TAG_NAME + ' をリリースしました！直感的な箱書き管理で創作をサポートします。\n\n' +
-                      'Download: https://github.com/GennosukeSatsuki/hakogaki/releases/tag/' + process.env.TAG_NAME + '\n\n' +
-                      '#HakoGraph #writingtool #小説執筆 #創作支援';
-          client.v2.tweet(msg)
-            .then(t => console.log('✅ ツイート成功！ ID:', t.data.id))
-            .catch(e => {
+          
+          (async () => {
+            try {
+              // Upload image
+              const mediaId = await client.v1.uploadMedia('./screenshot/Xpost.png');
+              console.log('✅ 画像アップロード成功！ Media ID:', mediaId);
+              
+              // Tweet with image
+              const msg = '📦 HakoGraph ' + process.env.TAG_NAME + ' Released!\nA powerful plotting tool for novelists & screenwriters.\n\n' +
+                          '小説・脚本の構成作成ツール HakoGraph ' + process.env.TAG_NAME + ' をリリースしました！直感的な箱書き管理で創作をサポートします。\n\n' +
+                          'Download: https://github.com/GennosukeSatsuki/hakogaki/releases/tag/' + process.env.TAG_NAME + '\n\n' +
+                          '#HakoGraph #writingtool #小説執筆 #創作支援';
+              
+              const tweet = await client.v2.tweet({
+                text: msg,
+                media: { media_ids: [mediaId] }
+              });
+              
+              console.log('✅ ツイート成功！ ID:', tweet.data.id);
+            } catch (e) {
               console.error('❌ ツイート失敗:', JSON.stringify(e.data || e.message, null, 2));
               console.log('⚠️ ツイートに失敗しましたが、リリースは続行します');
-            });
+            }
+          })();
           "

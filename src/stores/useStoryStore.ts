@@ -13,6 +13,8 @@ interface StoryState {
   dailyProgress: DailyProgress | null;
   currentFilePath: string | null;
   lastDeployPath: string | null;
+  sceneCharCounts: Record<string, number>;
+
 
   setScenes: (scenes: Scene[] | ((prev: Scene[]) => Scene[])) => void;
   setCharacters: (characters: Character[] | ((prev: Character[]) => Character[])) => void;
@@ -23,6 +25,8 @@ interface StoryState {
   setDailyProgress: (progress: DailyProgress | null | ((prev: DailyProgress | null) => DailyProgress | null)) => void;
   setCurrentFilePath: (path: string | null) => void;
   setLastDeployPath: (path: string | null) => void;
+  updateSceneCharCount: (id: string, count: number) => void;
+
   
   // Specific Actions
   addCharacter: (name: string) => void;
@@ -65,6 +69,7 @@ export const useStoryStore = create<StoryState>()(
       dailyProgress: null,
       currentFilePath: null,
       lastDeployPath: null,
+      sceneCharCounts: {},
 
       setScenes: (input) => set((state) => ({ scenes: typeof input === 'function' ? input(state.scenes) : input })),
       setCharacters: (input) => set((state) => ({ characters: typeof input === 'function' ? input(state.characters) : input })),
@@ -75,6 +80,10 @@ export const useStoryStore = create<StoryState>()(
       setDailyProgress: (input) => set((state) => ({ dailyProgress: typeof input === 'function' ? input(state.dailyProgress) : input })),
       setCurrentFilePath: (path) => set({ currentFilePath: path }),
       setLastDeployPath: (path) => set({ lastDeployPath: path }),
+
+      updateSceneCharCount: (id, count) => set(state => ({
+        sceneCharCounts: { ...state.sceneCharCounts, [id]: count }
+      })),
 
       addCharacter: (name) => {
         if (name && name.trim()) {
@@ -142,6 +151,7 @@ export const useStoryStore = create<StoryState>()(
         dailyProgress: null,
         currentFilePath: null,
         lastDeployPath: null,
+        sceneCharCounts: {},
       }),
     }),
     {

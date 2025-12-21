@@ -5,6 +5,7 @@ import { writeTextFile } from '@tauri-apps/plugin-fs';
 import SceneListPage from './pages/SceneListPage';
 import EditorPage from './pages/EditorPage';
 import { exportProject } from './utils/exportUtils';
+import { useStoryStore } from './stores/useStoryStore';
 
 export default function App() {
   useEffect(() => {
@@ -16,25 +17,28 @@ export default function App() {
         event.preventDefault();
 
         try {
-          const savedData = localStorage.getItem('storyData');
-          if (savedData) {
-            let data = JSON.parse(savedData);
+          // get current state snapshot from store
+          const currentStoreState = useStoryStore.getState();
+          
+          let data = { ...currentStoreState };
+          
+          // 1. 書き出し（自動追跡保存）
+          if (data.lastDeployPath) {
+            const { scenes, chapters } = await exportProject(data as any, data.lastDeployPath);
+            // 書き出し結果（deploymentInfoなど）を反映
+            const updatedData = { ...data, scenes, chapters };
             
-            // 1. 書き出し（自動追跡保存）
-            if (data.lastDeployPath) {
-              const { scenes, chapters } = await exportProject(data, data.lastDeployPath);
-              // 書き出し結果（deploymentInfoなど）を反映
-              data = { ...data, scenes, chapters };
-            }
-
             // 2. JSONプロジェクトファイルの保存
             if (data.currentFilePath) {
-              await writeTextFile(data.currentFilePath, JSON.stringify(data, null, 2));
+              await writeTextFile(data.currentFilePath, JSON.stringify(updatedData, null, 2));
               console.log('Project JSON saved on close');
             }
             
-            // 最新の状態をlocalStorageにも保存（次回の起動用）
-            localStorage.setItem('storyData', JSON.stringify(data));
+            // Store のステートを最終更新（persist が localStorage に同期してくれる）
+            useStoryStore.setState(updatedData);
+          } else if (data.currentFilePath) {
+            // 書き出しパスはないがJSONパスはある場合
+            await writeTextFile(data.currentFilePath, JSON.stringify(data, null, 2));
           }
         } catch (e) {
           console.error('Auto-save on close failed:', e);

@@ -19,8 +19,10 @@ export default function EditorPage() {
   const chapters = useStoryStore(state => state.chapters);
   const lastDeployPath = useStoryStore(state => state.lastDeployPath);
   const dailyProgress = useStoryStore(state => state.dailyProgress);
+  const sceneCharCounts = useStoryStore(state => state.sceneCharCounts); // Changed: use store
   const setDailyProgress = useStoryStore(state => state.setDailyProgress);
   const updateSceneInStore = useStoryStore(state => state.updateScene);
+  const updateSceneCharCount = useStoryStore(state => state.updateSceneCharCount); // Changed: use store
 
   // Local States for Editor
   const [content, setContent] = useState('');
@@ -63,15 +65,15 @@ export default function EditorPage() {
         if (s.id === id) {
           progress += getBodyCharCount(content) - startingCount;
         } else {
-          const cached = localStorage.getItem(`sceneCharCount_${s.id}`);
-          if (cached) {
-            progress += parseInt(cached, 10) - startingCount;
+          const count = sceneCharCounts[s.id]; // Changed: use store
+          if (count !== undefined) {
+            progress += count - startingCount;
           }
         }
       }
     });
     return progress;
-  }, [dailyProgress, scenes, id, content, getBodyCharCount]);
+  }, [dailyProgress, scenes, id, content, sceneCharCounts, getBodyCharCount]);
 
   // 全文字数計算
   const totalChars = useMemo(() => {
@@ -80,12 +82,12 @@ export default function EditorPage() {
       if (s.id === id) {
         count += getBodyCharCount(content);
       } else {
-        const cached = localStorage.getItem(`sceneCharCount_${s.id}`);
-        if (cached) count += parseInt(cached, 10);
+        const cached = sceneCharCounts[s.id]; // Changed: use store
+        if (cached !== undefined) count += cached;
       }
     });
     return count;
-  }, [scenes, id, content, getBodyCharCount]);
+  }, [scenes, id, content, sceneCharCounts, getBodyCharCount]);
 
   // ファイル読み込み
   const loadSceneFile = useCallback(async () => {
@@ -134,7 +136,7 @@ export default function EditorPage() {
         setOriginalContent(fileContent);
 
         const currentCount = getBodyCharCount(fileContent);
-        localStorage.setItem(`sceneCharCount_${id}`, currentCount.toString());
+        updateSceneCharCount(id, currentCount); // Changed: use store action
 
         // 進捗管理の更新
         const today = new Date().toDateString();
@@ -159,7 +161,7 @@ export default function EditorPage() {
       setError(`${t('messages.fileLoadFailed')}: ${e}`);
       setLoading(false);
     }
-  }, [id, scenes, chapters, lastDeployPath, settings.language, dailyProgress, setDailyProgress, updateSceneInStore, getBodyCharCount, t]);
+  }, [id, scenes, chapters, lastDeployPath, settings.language, dailyProgress, setDailyProgress, updateSceneInStore, updateSceneCharCount, getBodyCharCount, t]);
 
   useEffect(() => {
     loadSceneFile();
@@ -173,6 +175,11 @@ export default function EditorPage() {
       try {
         await writeTextFile(filePath, content);
         setOriginalContent(content);
+        
+        // 文字数キャッシュの更新
+        const charCount = getBodyCharCount(content);
+        updateSceneCharCount(id!, charCount);
+        
         console.log('Auto saved');
       } catch (e) {
         console.error('Auto save failed:', e);
@@ -180,7 +187,7 @@ export default function EditorPage() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [content, settings.autoSave, filePath, loading, fileExists, originalContent]);
+  }, [content, settings.autoSave, filePath, loading, fileExists, originalContent, id, getBodyCharCount, updateSceneCharCount]);
 
   const handleSave = async () => {
     if (!filePath) {
@@ -192,7 +199,7 @@ export default function EditorPage() {
       setOriginalContent(content);
       
       const charCount = getBodyCharCount(content);
-      localStorage.setItem(`sceneCharCount_${id}`, charCount.toString());
+      updateSceneCharCount(id!, charCount); // Changed: use store action
 
       const isComp = !content.includes('──────────────');
       updateSceneInStore(id!, { isCompleted: isComp });
@@ -232,7 +239,7 @@ export default function EditorPage() {
       await writeTextFile(filePath, bodyText);
       setOriginalContent(bodyText);
       
-      localStorage.setItem(`sceneCharCount_${id}`, bodyText.length.toString());
+      updateSceneCharCount(id, bodyText.length); // Changed: use store action
       updateSceneInStore(id, { isCompleted: true });
       
       alert(t('messages.markedComplete'));

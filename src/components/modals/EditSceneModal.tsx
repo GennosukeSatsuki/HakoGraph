@@ -20,6 +20,8 @@ interface EditSceneModalProps {
   handleTimeButtonPress: (callback: () => void) => void;
   handleTimeButtonRelease: () => void;
   onOpenCharacterMenu: () => void;
+  onOpenLocationMenu: () => void;
+  onOpenChapterMenu: () => void;
 }
 
 export function EditSceneModal({
@@ -39,6 +41,8 @@ export function EditSceneModal({
   handleTimeButtonPress,
   handleTimeButtonRelease,
   onOpenCharacterMenu,
+  onOpenLocationMenu,
+  onOpenChapterMenu,
 }: EditSceneModalProps) {
   const { t } = useTranslation();
 
@@ -66,19 +70,30 @@ export function EditSceneModal({
             {/* Chapter selection */}
             <div className={styles.formGroup}>
               <label>章タイトル</label>
-              <select
-                value={editForm.chapterId || ''}
-                onChange={e => {
-                  const newId = e.target.value;
-                  const newTitle = chapters.find(c => c.id === newId)?.title || '';
-                  onChange({ ...editForm, chapterId: newId, chapter: newTitle });
-                }}
-              >
-                <option value="">-- {t('common.select')} --</option>
-                {chapters.map(c => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select
+                  value={editForm.chapterId || ''}
+                  onChange={e => {
+                    const newId = e.target.value;
+                    const newTitle = chapters.find(c => c.id === newId)?.title || '';
+                    onChange({ ...editForm, chapterId: newId, chapter: newTitle });
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  <option value="">-- {t('common.select')} --</option>
+                  {chapters.map(c => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+                <button 
+                  className={styles.addTagBtn} 
+                  onClick={onOpenChapterMenu}
+                  title={t('actions.chapterSettings')}
+                  style={{ padding: '0 0.75rem' }}
+                >
+                  +
+                </button>
+              </div>
             </div>
             {/* Time input */}
             <div className={styles.formGroup}>
@@ -250,15 +265,26 @@ export function EditSceneModal({
             <div className={styles.formGroup}>
               <label>{t('scene.place')}</label>
               {settings.placeInputMode === 'select' ? (
-                <select
-                  value={editForm.place}
-                  onChange={e => handleInputChange('place', e.target.value)}
-                >
-                  <option value="">-</option>
-                  {locations.map(l => (
-                    <option key={l.id} value={l.name}>{l.name}</option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <select
+                    value={editForm.place}
+                    onChange={e => handleInputChange('place', e.target.value)}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">-</option>
+                    {locations.map(l => (
+                      <option key={l.id} value={l.name}>{l.name}</option>
+                    ))}
+                  </select>
+                  <button 
+                    className={styles.addTagBtn} 
+                    onClick={onOpenLocationMenu}
+                    title={t('actions.locationSettings')}
+                    style={{ padding: '0 0.75rem' }}
+                  >
+                    +
+                  </button>
+                </div>
               ) : (
                 <input
                   value={editForm.place}

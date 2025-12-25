@@ -354,6 +354,8 @@ export default function SceneListPage() {
   handleTimeButtonPress={handleTimeButtonPress}
   handleTimeButtonRelease={handleTimeButtonRelease}
   onOpenCharacterMenu={() => setIsCharacterMenuOpen(true)}
+  onOpenLocationMenu={() => setIsLocationMenuOpen(true)}
+  onOpenChapterMenu={() => setIsChapterMenuOpen(true)}
 />
 
       <CharacterManagementModal
